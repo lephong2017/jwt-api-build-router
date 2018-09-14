@@ -16,9 +16,9 @@ import {FormGroup,FormControl,Form,Button} from 'react-bootstrap';
 import {login,logout} from 'utils/securityAPI/apiCaller';
 import {ACCESS_TOKEN} from 'settings/sessionStorage';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
-
-import { createBrowserHistory } from "history";
-const history = createBrowserHistory();
+// import { createBrowserHistory } from "history";
+import MyTable from '../../../components/table/MyTable';
+// const history = createBrowserHistory();
 class ProductListPage extends Component {  
     constructor(props){
         super(props);
@@ -30,20 +30,21 @@ class ProductListPage extends Component {
             listPageVisitFilter:[1],
         };
     }
-    componentDidMount(){
-        // console.log("history product");
-        // console.log(history.location.pathname);
-        // console.log("history product");
-        var {pageSize,pageIndex,iSearch} = this.state;
-        var ss =sessionStorage.getItem(ACCESS_TOKEN);
-        var obj = JSON.parse(ss);
-        if(ss!==null){
-            this.props.fetchAllProducts(pageSize,pageIndex,iSearch);
-            this.props.fetchAllCategoryProduct();
-            this.props.setScopeOfUser(obj.profile['name']);
-        }
-    }
+    // componentDidMount(){
+    //     // console.log("history product");
+    //     // console.log(history.location.pathname);
+    //     // console.log("history product");
+    //     var {pageSize,pageIndex,iSearch} = this.state;
+    //     var ss =sessionStorage.getItem(ACCESS_TOKEN);
+    //     var obj = JSON.parse(ss);
+    //     if(ss!==null){
+    //         this.props.fetchAllProducts(pageSize,pageIndex,iSearch);
+    //         this.props.fetchAllCategoryProduct();
+    //         this.props.setScopeOfUser(obj.profile['name']);
+    //     }
+    // }
     componentWillMount(){
+        // console.log("a");
         // Gọi trước khi component đc render lần đầu tiên 
         var {pageSize,pageIndex,iSearch} = this.state;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
@@ -57,7 +58,7 @@ class ProductListPage extends Component {
     onChange=e =>{
         var val =e.target.value;
         if(val.trim()===''){
-            this.setState({iSearch:"ALL"});
+            this.setState({iSearch:"ALL",pageIndex:1});
             this.props.fetchAllProducts(this.state.pageSize,this.state.pageIndex,"ALL");
             this.props.fetchAllCategoryProduct();
         }else{
@@ -70,7 +71,106 @@ class ProductListPage extends Component {
             listPageVisitFilter:[],
         });
     }
+    onPageChange=(pageInd)=>{
+        var {fetchAllProducts,searchProduct,saveCateCode } = this.props;
+        var stringFilter=(saveCateCode!=='null')?saveCateCode:this.state.iSearch;
+        if(saveCateCode==='all-cate'){
+            this.setState({
+                listPageVisit:[],
+                listPageVisitFilter:[],
+                iSearch:'ALL'
+            });
+        }
+        if(saveCateCode==='null'||saveCateCode==='all-cate'){
+            if(stringFilter===''||stringFilter===0||stringFilter==="ALL"){
+                var pageVisit = this.state.listPageVisit;
+                this.setState({
+                pageIndex:pageInd+1,
+                listPageVisitFilter:[],
+                isActiveDropdown:false,
+            },
+                function(){
+                    // console.log(this.state.listPageVisit);
+                    var isPageVisit= this.state.listPageVisit.includes(pageInd+1);
+                    if(isPageVisit===false){
+                        pageVisit.push(pageInd+1);
+                        this.setState({listPageVisit:pageVisit, });
+                        fetchAllProducts(
+                            this.state.pageSize,
+                            this.state.pageIndex,
+                            "ALL"
+                        );
+                        
+                    }
+                });
+            }else{
+                this.setState({pageIndex:pageInd+1,listPageVisit:[]},
+                    function(){
+                        var pageVisit = this.state.listPageVisitFilter;
+                        var isPageVisit= this.state.listPageVisitFilter.includes(pageInd+1);
+                        if(isPageVisit===false){
+                            pageVisit.push(pageInd+1);
+                            this.setState({listPageVisitFilter:pageVisit, });
+                            searchProduct(
+                                this.state.pageSize,
+                                this.state.pageIndex,
+                                stringFilter
+                            );
+                        }
 
+                    });
+                }
+        }else{
+            this.setState({
+                listPageVisit:[],
+                listPageVisitFilter:[],
+                pageIndex:pageInd+1,
+            },()=>{
+                var pageVisit = this.state.listPageVisitFilter;
+                var isPageVisit= this.state.listPageVisitFilter.includes(pageInd+1);
+                if(isPageVisit===false){
+                    pageVisit.push(pageInd+1);
+                    this.setState({listPageVisitFilter:pageVisit, });
+                    searchProduct(
+                        this.state.pageSize,
+                        this.state.pageIndex,
+                        stringFilter
+                    );
+                }
+            });
+
+            }
+        } 
+    
+    onPageSizeChange=(pSize, pIndex)=>{
+        var {fetchAllProducts,searchProduct} = this.props;
+            this.setState({
+                pageIndex:pIndex+1,
+                pageSize:pSize,
+                listPageVisit:[],
+                listPageVisitFilter:[],
+            },
+            function(){
+                if(this.state.iSearch===0||
+                    this.state.iSearch===''||
+                    this.state.iSearch==="ALL"){
+                        fetchAllProducts(
+                            pSize,
+                            this.state.pageIndex,
+                            "ALL"
+                        );
+                    }else{
+                        searchProduct(
+                            pSize,
+                            this.state.pageIndex,
+                            this.state.iSearch
+                        );
+                    }
+            });                                            
+    }
+    defaultFilterMethod=(filter, row)=>{
+        String(row[filter.id]) === filter.value;
+    }
     searchHandle=e=>{
         e.preventDefault();
         var word = this.state.iSearch;
@@ -121,6 +221,103 @@ class ProductListPage extends Component {
         var { isFetching,products,categorys,fetchAllProducts,searchProduct,saveCateCode,scopeOfUser } = this.props;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var isDisabled = (scopeOfUser.includes("PRODUCT.WRITE"))?false:true;
+        var objSetting={
+            loadding:{isFetching},
+            defaultFilterMethod:this.defaultFilterMethod,
+            defaultPageSize:5,
+            onPageChange:this.onPageChange,
+            onPageSizeChange:this.onPageSizeChange,
+            className: "-striped -highlight",
+            page:this.state.pageIndex,
+            pageSize:this.state.pageSize
+        }
+        var myCol =[
+            {
+                Header: "ID",
+                id: "productId",
+                accessor: d => d.productId,
+                filterMethod: (filter, rows) =>
+                matchSorter(rows, filter.value, { keys: ["productId"] }),
+                filterAll: true
+            },
+            {
+                Header: "Name",
+                id: "productName",
+                accessor: d => d.productName,
+                filterMethod: (filter, rows) =>
+                matchSorter(rows, filter.value, { keys: ["productName"] }),
+                filterAll: true
+            },
+            {
+                Header: "Category",
+                id: "productCategoryCode",
+                accessor: d => d.productCategoryCode,
+                filterMethod: (filter, rows) =>
+                matchSorter(rows, filter.value, { keys: ["productCategoryCode"] }),
+                Cell: row=>{
+
+                    var result ="";
+                    categorys.forEach((cate, index) => {
+                        if (cate.productCategoryCode === row.value) {
+                            result = cate.productCategoryDescription;
+                        }
+                    });
+                    return result;
+                }
+                ,
+                
+                filterAll: true
+            },
+            {
+                Header: "Price",
+                id: "productPrice",
+                accessor: d => d.productPrice,
+                filterMethod: (filter, rows) =>
+                matchSorter(rows, filter.value, { keys: ["productPrice"] }),
+                filterAll: true
+            },
+            {
+                Header: "Detail",
+                id: "otherProductDetails",
+                accessor: d => d.otherProductDetails,
+                filterMethod: (filter, rows) =>
+                matchSorter(rows, filter.value, { keys: ["otherProductDetails"] }),
+                filterAll: true
+            },
+            {
+                
+                Header: "Edit",
+                accessor:"productId",
+                filterable:false,
+                Cell: row => (
+                <div className="button-table"> 
+                    <MyButton small aria_label='EDIT' 
+                        ID={row.value} 
+                        obj="product"
+                        isDisabled={isDisabled}
+                        pagination={[
+                            this.state.pageIndex,
+                            this.state.pageSize,
+                            this.state.iSearch
+                        ]}/>
+                </div>
+                )
+            },
+            {   
+                Header: "Delete",
+                accessor:"productId",
+                filterable:false,
+                Cell: row => (
+                <div className="button-table"> 
+                    <MyButton size="small" 
+                        aria_label='DELETE' 
+                        isDisabled={isDisabled}
+                        onClickComponent={()=>this.onDeleteProduct(row.value)}
+                        productId={row.value} 
+                        pagination={[this.state.pageIndex,this.state.pageSize,this.state.iSearch]}/> 
+                </div>
+                )
+            }]
        return (ss===null) ?
             (<div>
                <h1 style={{color:'red'}}>Để xem chức năng này bạn cần phải đăng nhập trước!!!</h1>
@@ -171,200 +368,9 @@ class ProductListPage extends Component {
                                     </div>
                                 </div>
                             </div>
-                            <br/>
-                            <br/>
-                            <br/>
-                            <br/>
+                            <div><br/> <br/> <br/> <br/></div>
                            <div style={{width:'100%',marginTop:'30px',}}>
-                           <ReactTable data={products}
-                                        loading={isFetching}
-                                        defaultFilterMethod={(filter, row) => String(row[filter.id]) === filter.value}
-                                        columns={[
-                                        {
-                                            Header: "ID",
-                                            id: "productId",
-                                            accessor: d => d.productId,
-                                            filterMethod: (filter, rows) =>
-                                            matchSorter(rows, filter.value, { keys: ["productId"] }),
-                                            filterAll: true
-                                        },
-                                        {
-                                            Header: "Name",
-                                            id: "productName",
-                                            accessor: d => d.productName,
-                                            filterMethod: (filter, rows) =>
-                                            matchSorter(rows, filter.value, { keys: ["productName"] }),
-                                            filterAll: true
-                                        },
-                                        {
-                                            Header: "Category",
-                                            id: "productCategoryCode",
-                                            accessor: d => d.productCategoryCode,
-                                            filterMethod: (filter, rows) =>
-                                            matchSorter(rows, filter.value, { keys: ["productCategoryCode"] }),
-                                            Cell: row=>{
-
-                                                var result ="";
-                                                categorys.forEach((cate, index) => {
-                                                    if (cate.productCategoryCode === row.value) {
-                                                        result = cate.productCategoryDescription;
-                                                    }
-                                                });
-                                                return result;
-                                            }
-                                            ,
-                                            
-                                            filterAll: true
-                                        },
-                                        {
-                                            Header: "Price",
-                                            id: "productPrice",
-                                            accessor: d => d.productPrice,
-                                            filterMethod: (filter, rows) =>
-                                            matchSorter(rows, filter.value, { keys: ["productPrice"] }),
-                                            filterAll: true
-                                        },
-                                        {
-                                            Header: "Detail",
-                                            id: "otherProductDetails",
-                                            accessor: d => d.otherProductDetails,
-                                            filterMethod: (filter, rows) =>
-                                            matchSorter(rows, filter.value, { keys: ["otherProductDetails"] }),
-                                            filterAll: true
-                                        },
-                                        {
-                                            
-                                            Header: "Edit",
-                                            accessor:"productId",
-                                            filterable:false,
-                                            Cell: row => (
-                                            <div className="button-table"> 
-                                                <MyButton small aria_label='EDIT' 
-                                                    ID={row.value} 
-                                                    obj="product"
-                                                    isDisabled={isDisabled}
-                                                    pagination={[
-                                                        this.state.pageIndex,
-                                                        this.state.pageSize,
-                                                        this.state.iSearch
-                                                    ]}/>
-                                            </div>
-                                            )
-                                        },
-                                        {   
-                                            Header: "Delete",
-                                            accessor:"productId",
-                                            filterable:false,
-                                            Cell: row => (
-                                            <div className="button-table"> 
-                                                <MyButton size="small" 
-                                                    aria_label='DELETE' 
-                                                    isDisabled={isDisabled}
-                                                    onClickComponent={()=>this.onDeleteProduct(row.value)}
-                                                    productId={row.value} 
-                                                    pagination={[this.state.pageIndex,this.state.pageSize,this.state.iSearch]}/> 
-                                            </div>
-                                            )
-                                        }]}
-                                        defaultPageSize={5}
-                                        onPageChange={(pageInd) => {
-                                            var stringFilter=(saveCateCode!=='null')?saveCateCode:this.state.iSearch;
-                                            if(saveCateCode==='all-cate'){
-                                                this.setState({
-                                                    listPageVisit:[],
-                                                    listPageVisitFilter:[],
-                                                    iSearch:'ALL'
-                                                });
-                                            }
-                                            if(saveCateCode==='null'||saveCateCode==='all-cate'){
-                                                if(stringFilter===''||stringFilter===0||stringFilter==="ALL"){
-                                                    var pageVisit = this.state.listPageVisit;
-                                                    this.setState({
-                                                    pageIndex:pageInd+1,
-                                                    listPageVisitFilter:[],
-                                                    isActiveDropdown:false,
-                                                },
-                                                    function(){
-                                                        // console.log(this.state.listPageVisit);
-                                                        var isPageVisit= this.state.listPageVisit.includes(pageInd+1);
-                                                        if(isPageVisit===false){
-                                                            pageVisit.push(pageInd+1);
-                                                            this.setState({listPageVisit:pageVisit, });
-                                                            fetchAllProducts(
-                                                                this.state.pageSize,
-                                                                this.state.pageIndex,
-                                                                "ALL"
-                                                            );
-                                                           
-                                                        }
-                                                    });
-                                                }else{
-                                                    this.setState({pageIndex:pageInd+1,listPageVisit:[]},
-                                                        function(){
-                                                            var pageVisit = this.state.listPageVisitFilter;
-                                                            var isPageVisit= this.state.listPageVisitFilter.includes(pageInd+1);
-                                                            if(isPageVisit===false){
-                                                                pageVisit.push(pageInd+1);
-                                                                this.setState({listPageVisitFilter:pageVisit, });
-                                                                searchProduct(
-                                                                    this.state.pageSize,
-                                                                    this.state.pageIndex,
-                                                                    stringFilter
-                                                                );
-                                                            }
-        
-                                                        });
-                                                    }
-                                            }else{
-                                                this.setState({
-                                                    listPageVisit:[],
-                                                    listPageVisitFilter:[],
-                                                    pageIndex:pageInd+1,
-                                                },()=>{
-                                                    var pageVisit = this.state.listPageVisitFilter;
-                                                    var isPageVisit= this.state.listPageVisitFilter.includes(pageInd+1);
-                                                    if(isPageVisit===false){
-                                                        pageVisit.push(pageInd+1);
-                                                        this.setState({listPageVisitFilter:pageVisit, });
-                                                        searchProduct(
-                                                            this.state.pageSize,
-                                                            this.state.pageIndex,
-                                                            stringFilter
-                                                        );
-                                                    }
-                                                });
-
-                                            }
-                                        } 
-                                        } // Called when the page index is changed by the user
-                                        onPageSizeChange={(pSize, pIndex) => {  
-                                            this.setState({
-                                                pageIndex:pIndex+1,
-                                                pageSize:pSize,
-                                                listPageVisit:[],
-                                                listPageVisitFilter:[],
-                                            },
-                                                function(){
-                                                    if(this.state.iSearch===0||
-                                                        this.state.iSearch===''||
-                                                        this.state.iSearch==="ALL"){
-                                                            fetchAllProducts(
-                                                                this.state.pageSize,
-                                                                this.state.pageIndex,
-                                                                "ALL"
-                                                            );
-                                                        }else{
-                                                            searchProduct(
-                                                                this.state.pageSize,
-                                                                this.state.pageIndex,
-                                                                this.state.iSearch
-                                                            );
-                                                        }
-                                                });                                            
-                                            }
-                                        } 
-                                        className="-striped -highlight"
-                                    />
+                           <MyTable styleTable="REACT_TABLE" data={products} col={myCol} ObjSetting={objSetting}/>
                            </div>
                         </div>
                     </div>

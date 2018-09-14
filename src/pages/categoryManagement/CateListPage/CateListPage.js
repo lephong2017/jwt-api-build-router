@@ -15,7 +15,11 @@ import {ACCESS_TOKEN} from 'settings/sessionStorage';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 
 import { createBrowserHistory } from "history";
-const history = createBrowserHistory();
+import MyTable from '../../../components/table/MyTable';
+// const history = createBrowserHistory();
+import {updateIndex} from 'settings/settings_key_antd';
+import ButtonAntd from '../../../components/button/ButtonAntd';
+
 class CateListPage extends Component {  
     constructor(props){
         super(props);
@@ -28,20 +32,20 @@ class CateListPage extends Component {
             // scope:[],
         };
     }
-    componentDidMount(){
-        // console.log("history cate");
-        // console.log(history.location.pathname);
-        // console.log("history cate");
-        var ss =sessionStorage.getItem(ACCESS_TOKEN);
-        var {pageSize,pageIndex,iSearch} = this.state;
-        var obj = JSON.parse(ss);
-        if(ss!==null){
-            // console.log(obj.profile['name']);
-            this.props.fetchAllCategory(pageSize,pageIndex,iSearch);
-            this.props.setScopeOfUser(obj.profile['name']);
-            // this.setState({scope:obj.profile['name']});
-        }
-    }
+    // componentDidMount(){
+    //     // console.log("history cate");
+    //     // console.log(history.location.pathname);
+    //     // console.log("history cate");
+    //     var ss =sessionStorage.getItem(ACCESS_TOKEN);
+    //     var {pageSize,pageIndex,iSearch} = this.state;
+    //     var obj = JSON.parse(ss);
+    //     if(ss!==null){
+    //         // console.log(obj.profile['name']);
+    //         this.props.fetchAllCategory(pageSize,pageIndex,iSearch);
+    //         this.props.setScopeOfUser(obj.profile['name']);
+    //         // this.setState({scope:obj.profile['name']});
+    //     }
+    // }
     componentWillMount(){
         // Gọi trước khi component đc render lần đầu tiên 
         var {pageSize,pageIndex,iSearch} = this.state;
@@ -89,6 +93,7 @@ class CateListPage extends Component {
        
     }
     onDelete = (id) => { 
+        // console.log(id);
         var {onDeleteCategory} = this.props;
         swal({
             title: "Are you sure?",
@@ -108,11 +113,141 @@ class CateListPage extends Component {
             }
         });
     }
+    onPageChange=(pageInd)=>{
+        var { fetchAllCategory,searchCategory } = this.props;
+        var stringFilter = this.state.iSearch;
+        if(stringFilter===''||stringFilter==="ALL"){
+            var pageVisit = this.state.listPageVisit;
+            this.setState({
+            pageIndex:pageInd,
+            listPageVisitFilter:[],
+        },
+            function(){
+                // console.log(this.state.listPageVisit);
+                var isPageVisit= this.state.listPageVisit.includes(pageInd);
+                if(isPageVisit===false){
+                    pageVisit.push(pageInd);
+                    this.setState({listPageVisit:pageVisit, });
+                    fetchAllCategory(
+                        this.state.pageSize,
+                        this.state.pageIndex,
+                        "ALL"
+                    );
+                    
+                }
+            });
+        }else{
+            this.setState({pageIndex:pageInd+1,listPageVisit:[]},
+                function(){
+                    var pageVisit = this.state.listPageVisitFilter;
+                    var isPageVisit= this.state.listPageVisitFilter.includes(pageInd);
+                    if(isPageVisit===false){
+                        pageVisit.push(pageInd);
+                        this.setState({listPageVisitFilter:pageVisit, });
+                        searchCategory(
+                            this.state.pageSize,
+                            this.state.pageIndex,
+                            stringFilter
+                        );
+                    }
 
+                });
+            }
+        } 
+    
+    onPageSizeChange=(pSize, pIndex)=>{
+        var { fetchAllCategory,searchCategory } = this.props;
+        this.setState({
+            pageIndex:pIndex+1,
+            pageSize:pSize,
+            listPageVisit:[],
+            listPageVisitFilter:[],
+        },
+            function(){
+                if(this.state.iSearch===0||
+                    this.state.iSearch===''||
+                    this.state.iSearch==="ALL"){
+                        fetchAllCategory(
+                            this.state.pageSize,
+                            this.state.pageIndex,
+                            "ALL"
+                        );
+                    }else{
+                        searchCategory(
+                            this.state.pageSize,
+                            this.state.pageIndex,
+                            this.state.iSearch
+                        );
+                    }
+            });                                        
+    }
+    defaultFilterMethod=(filter, row)=>{
+        String(row[filter.id]) === filter.value;
+    }
     render() {
         var { isFetchingCategory,categorys,fetchAllCategory,searchCategory,scopeOfUser } = this.props;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var isDisabled = (scopeOfUser.includes("CATE.WRITE"))?false:true;
+        var objSetting={
+            loadding:{isFetchingCategory},
+            defaultFilterMethod:this.defaultFilterMethod,
+            defaultPageSize:5,
+            onPageChange:this.onPageChange,
+            onPageSizeChange:this.onPageSizeChange,
+            className: "-striped -highlight",
+            page:this.state.pageIndex,
+            pageSize:this.state.pageSize
+        }
+        var myCol=[
+            {
+                title: "ID",
+                dataIndex: "productCategoryCode",
+                key:`productCategoryCode${updateIndex()}`,
+            },
+            {
+                title: "Description",
+                dataIndex: "productCategoryDescription",
+                key:`productCategoryDescription${updateIndex()}`,
+            },
+            
+            {
+                title: "Edit",
+                key:`edit${updateIndex()}`,
+                dataIndex:"productCategoryCode",
+                render:(text, record, index)  => {
+                    return (
+                        <div className="button-table"> 
+                            <ButtonAntd 
+                                isDisabled={isDisabled} 
+                                acttype='EDIT' 
+                                ID={text}
+                                obj="cate"
+                                pagination={[
+                                    this.state.pageIndex,
+                                    this.state.pageSize,
+                                    this.state.iSearch
+                                ]}
+                                type="primary" shape="circle" icon="edit" />
+                        </div>
+                        )
+                }
+            },
+            {   
+                title: "Delete",
+                key:`delete${updateIndex()}`,
+                dataIndex:"productCategoryCode",
+                render: (text, record, index) => {
+                    return (
+                        <div  className="button-table"> 
+                            <ButtonAntd 
+                                isDisabled={isDisabled} 
+                                size="small"  acttype='DELETE' 
+                                onClickComponent={()=>{this.onDelete(text);}}
+                                />
+                        </div>
+                        )
+                } 
+            }];
        return (ss===null) ?
             (<div>
                <h1 style={{color:'red'}}>Để xem chức năng này bạn cần phải đăng nhập trước!!!</h1>
@@ -150,133 +285,9 @@ class CateListPage extends Component {
                                     </Form>
                                 </div>
                             </div>
-                            <br/>
-                            <br/>
-                            <br/>
+                            <br/> <br/>  <br/>
                            <div style={{width:'100%',marginTop:'30px',}}>
-                           <ReactTable data={categorys}
-                                        loading={isFetchingCategory}
-                                        defaultFilterMethod={(filter, row) => String(row[filter.id]) === filter.value}
-                                        columns={[
-                                        {
-                                            Header: "ID",
-                                            id: "productCategoryCode",
-                                            accessor: d => d.productCategoryCode,
-                                            filterMethod: (filter, rows) =>
-                                            matchSorter(rows, filter.value, { keys: ["productCategoryCode"] }),
-                                            filterAll: true
-                                        },
-                                        {
-                                            Header: "Description",
-                                            id: "productCategoryDescription",
-                                            accessor: d => d.productCategoryDescription,
-                                            filterMethod: (filter, rows) =>
-                                            matchSorter(rows, filter.value, { keys: ["productCategoryDescription"] }),
-                                            filterAll: true
-                                        },
-                                        
-                                        {
-                                            Header: "Edit",
-                                            accessor:"productCategoryCode",
-                                            filterable:false,
-                                            Cell: row => (
-                                            <div className="button-table"> 
-                                                <MyButton small aria_label='EDIT' 
-                                                    isDisabled={isDisabled} 
-                                                    ID={row.value}
-                                                    obj="cate"
-                                                    pagination={[
-                                                        this.state.pageIndex,
-                                                        this.state.pageSize,
-                                                        this.state.iSearch
-                                                ]}/>
-                                            </div>
-                                            )
-                                        },
-                                        {   
-                                            Header: "Delete",
-                                            accessor:"productCategoryCode",
-                                            filterable:false,
-                                            Cell: row => (
-                                            <div className="button-table"> 
-                                                <MyButton 
-                                                    isDisabled={isDisabled} 
-                                                    size="small"  aria_label='DELETE' 
-                                                    onClickComponent={()=>this.onDelete(row.value)}/> 
-                                            </div>
-                                            )
-                                        }]}
-                                        defaultPageSize={5}
-                                        onPageChange={(pageInd) => {
-                                            var stringFilter = this.state.iSearch;
-                                                if(stringFilter===''||stringFilter==="ALL"){
-                                                    var pageVisit = this.state.listPageVisit;
-                                                    this.setState({
-                                                    pageIndex:pageInd+1,
-                                                    listPageVisitFilter:[],
-                                                },
-                                                    function(){
-                                                        // console.log(this.state.listPageVisit);
-                                                        var isPageVisit= this.state.listPageVisit.includes(pageInd+1);
-                                                        if(isPageVisit===false){
-                                                            pageVisit.push(pageInd+1);
-                                                            this.setState({listPageVisit:pageVisit, });
-                                                            fetchAllCategory(
-                                                                this.state.pageSize,
-                                                                this.state.pageIndex,
-                                                                "ALL"
-                                                            );
-                                                           
-                                                        }
-                                                    });
-                                                }else{
-                                                    this.setState({pageIndex:pageInd+1,listPageVisit:[]},
-                                                        function(){
-                                                            var pageVisit = this.state.listPageVisitFilter;
-                                                            var isPageVisit= this.state.listPageVisitFilter.includes(pageInd+1);
-                                                            if(isPageVisit===false){
-                                                                pageVisit.push(pageInd+1);
-                                                                this.setState({listPageVisitFilter:pageVisit, });
-                                                                searchCategory(
-                                                                    this.state.pageSize,
-                                                                    this.state.pageIndex,
-                                                                    stringFilter
-                                                                );
-                                                            }
-        
-                                                        });
-                                                    }
-
-                                            }
-                                        } // Called when the page index is changed by the user
-                                        onPageSizeChange={(pSize, pIndex) => {
-                                            this.setState({
-                                                pageIndex:pIndex+1,
-                                                pageSize:pSize,
-                                                listPageVisit:[],
-                                                listPageVisitFilter:[],
-                                            },
-                                                function(){
-                                                    if(this.state.iSearch===0||
-                                                        this.state.iSearch===''||
-                                                        this.state.iSearch==="ALL"){
-                                                            fetchAllCategory(
-                                                                this.state.pageSize,
-                                                                this.state.pageIndex,
-                                                                "ALL"
-                                                            );
-                                                        }else{
-                                                            searchCategory(
-                                                                this.state.pageSize,
-                                                                this.state.pageIndex,
-                                                                this.state.iSearch
-                                                            );
-                                                        }
-                                                });                                            
-                                            }
-                                        } 
-                                        className="-striped -highlight"
-                                    />
+                           <MyTable styleTable="TABLE_ANTD" data={categorys} col={myCol} ObjSetting={objSetting}/>
                            </div>
                         </div>
                     </div>

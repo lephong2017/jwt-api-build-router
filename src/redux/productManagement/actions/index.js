@@ -20,6 +20,7 @@ export const actFetchAllProduct = (product) => {
 
 
 export const actFetchProductsRequest = (pageSize,pageIndex,StringFilter) => {
+    // console.log(pageSize,pageIndex,StringFilter);
     var total =0;
     callApis(`/Product/CountProductFilter/${StringFilter}/false`, 'GET', null).then(res => {
         total = res.data;
