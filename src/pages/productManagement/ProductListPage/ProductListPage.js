@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import './ProductListPage.css';
 import { Link ,withRouter} from 'react-router-dom';
 import { connect } from 'react-redux';
-import ReactTable from 'react-table';
 import matchSorter from 'match-sorter';
 import 'react-table/react-table.css';
 import swal from 'sweetalert';
@@ -169,7 +168,7 @@ class ProductListPage extends Component {
             });                                            
     }
     defaultFilterMethod=(filter, row)=>{
-        String(row[filter.id]) === filter.value;
+        return String(row[filter.id]) === filter.value;
     }
     searchHandle=e=>{
         e.preventDefault();
@@ -218,7 +217,7 @@ class ProductListPage extends Component {
         });
     }
     render() {
-        var { isFetching,products,categorys,fetchAllProducts,searchProduct,saveCateCode,scopeOfUser } = this.props;
+        var { isFetching,products,categorys,scopeOfUser } = this.props;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var isDisabled = (scopeOfUser.includes("PRODUCT.WRITE"))?false:true;
         var objSetting={

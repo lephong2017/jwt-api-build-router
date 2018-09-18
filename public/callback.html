@@ -9,7 +9,7 @@
     <script>
         var mgr = new Oidc.UserManager();
         mgr.signinRedirectCallback().then( ()=> {
-            window.location = "/cate-list";
+            window.location = "/";
         }).catch(function (e) {
             console.error(e);
         });

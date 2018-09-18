@@ -4,8 +4,8 @@ import { createBrowserHistory } from "history";
 const history = createBrowserHistory();
 const menus = [
     {
-        name: 'Home',
-        to: '/cate-list',
+        name: 'Organ',
+        to: '/organ',
         exact: true
     },
     {
@@ -16,6 +16,11 @@ const menus = [
     {
         name : 'Products',
         to : '/product-list',
+        exact : false
+    },
+    {
+        name : 'Home',
+        to : '/home',
         exact : false
     },
     // {

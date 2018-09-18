@@ -11,9 +11,16 @@ import categorys from './productManagement/reducers/cates';
 import saveCateCode from './productManagement/reducers/saveCateCode';
 import totalData from './productManagement/reducers/TotalData';
 import isFetching from './productManagement/reducers/isFetching';
+
+import users from './users/reducers/users';
+
+import organ from './organ/reducers/organ';
+
 const appReducers = combineReducers({
     categorys_index,isFetchingCategory,itemCateEditing,scopeOfUser,
     products,itemEditing,categorys,saveCateCode,totalData,isFetching,
+    users,
+    organ,
 });
 
 export default appReducers;

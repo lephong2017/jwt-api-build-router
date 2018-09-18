@@ -4,9 +4,15 @@ import CateActionPage from 'pages/categoryManagement/CateActionPage/CateActionPa
 import ProductListPage from './pages/productManagement/ProductListPage/ProductListPage';
 import ProductActionPage from './pages/productManagement/ProductActionPage/ProductActionPage';
 import AppSecurity from 'pages/pageDemo';
+import Home from 'pages/home/createOrganization.js';
 // import AppSecurity from 'containers/App';
 
 export const adminRoutes = [
+    {
+        path: '/home',
+        exact: true,
+        main: () => <Home />
+    },
     {
         path: '/cate-list',
         exact: false,
@@ -44,6 +50,11 @@ export const adminRoutes = [
     },
 ];
 export const userRoutes = [
+    {
+        path: '/home',
+        exact: true,
+        main: () => <Home />
+    },
     {
         path: '/cate-list',
         exact: false,

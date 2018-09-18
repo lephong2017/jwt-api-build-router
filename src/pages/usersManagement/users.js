@@ -1,22 +1,27 @@
 import React, { Component } from 'react';
-import './CateListPage.css';
 import { Link ,withRouter} from 'react-router-dom';
 import { connect } from 'react-redux';
 import 'react-table/react-table.css';
 import swal from 'sweetalert';
 import {actFetchCategoryRequest, actDeleteCategoryRequest, searchCategoryRequest} from 'redux/categoryManagement/actions/index';
-import {FormGroup,FormControl,Form,Button} from 'react-bootstrap';
 
 import {login,logout} from 'utils/securityAPI/apiCaller';
 import {ACCESS_TOKEN} from 'settings/sessionStorage';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 
-import MyTable from '../../../components/table/MyTable';
-// const history = createBrowserHistory();
+import MyTable from 'components/table/MyTable';
 import {updateIndex} from 'settings/settings_key_antd';
-import ButtonAntd from '../../../components/button/ButtonAntd';
+import ButtonAntd from 'components/button/ButtonAntd';
+import { Input,Icon,Button } from 'antd';
 
-class CateListPage extends Component {  
+import {actAddUsersRequest} from 'redux/users/actions/index';
+import {Register} from './action/add';
+import {RegisterEdit} from './action/edit';
+import {showNotification} from 'components/notification/Notification';
+import SetRole from './action/role';
+const Search = Input.Search;
+
+class Users extends Component {  
     constructor(props){
         super(props);
         this.state={
@@ -25,32 +30,75 @@ class CateListPage extends Component {
             pageIndex:1,
             listPageVisit:[1],
             listPageVisitFilter:[1],
-            // scope:[],
+            visible: false,
+            visibleEdit: false,
         };
     }
-    // componentDidMount(){
-    //     // console.log("history cate");
-    //     // console.log(history.location.pathname);
-    //     // console.log("history cate");
-    //     var ss =sessionStorage.getItem(ACCESS_TOKEN);
-    //     var {pageSize,pageIndex,iSearch} = this.state;
-    //     var obj = JSON.parse(ss);
-    //     if(ss!==null){
-    //         // console.log(obj.profile['name']);
-    //         this.props.fetchAllCategory(pageSize,pageIndex,iSearch);
-    //         this.props.setScopeOfUser(obj.profile['name']);
-    //         // this.setState({scope:obj.profile['name']});
-    //     }
-    // }
+    
+    showModal = () => {
+        this.setState({ visible: true });
+    }
+    showModalEdit = () => {
+        this.setState({ visibleEdit: true });
+    }
+
+    handleCancel = () => {
+        this.setState({ visible: false });
+    }
+
+    handleCreate = () => {
+        showNotification("THêm rồi","Đợi xíu đi nhen","topRight","success");
+        const form = this.formRef.props.form;
+        let user = {}
+        form.validateFields((err, values) => {
+            if (err) {
+                return;
+            }
+            user=values;
+            console.log('Received values of form: ', values);
+            form.resetFields();
+            this.setState({ visible: false });
+            showNotification("Success","Đã gọi API rồi, yên tâm đi, đợi xí!!!","topRight","success");
+            actAddUsersRequest(user);
+        });
+        
+    }
+    handleCancelEdit = () => {
+        this.setState({ visibleEdit: false });
+    }
+
+    handleEdit = () => {
+        showNotification("Edit rồi","Đợi xíu đi","topRight","success");
+        const form = this.formRef.props.form;
+        let user = {}
+        form.validateFields((err, values) => {
+            if (err) {
+                return;
+            }
+            user=values;
+            console.log('Received values of form: ', values);
+            form.resetFields();
+            this.setState({ visible: false });
+            showNotification("Success","Đã gọi API rồi, yên tâm đi, đợi xí!!!","topRight","success");
+            actAddUsersRequest(user);
+        });
+        
+    }
+
+    saveFormRef = (formRef) => {
+        this.formRef = formRef;
+    }
+    saveFormRefEdit = (formRef) => {
+        this.formRef = formRef;
+    }
+
     componentWillMount(){
-        // Gọi trước khi component đc render lần đầu tiên 
         var {pageSize,pageIndex,iSearch} = this.state;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var obj = JSON.parse(ss);
         if(ss!==null){
             this.props.fetchAllCategory(pageSize,pageIndex,iSearch);
             this.props.setScopeOfUser(obj.profile['name']);
-            // this.setState({scope:obj.profile['name']});
         }
     }
     onChange=e =>{
@@ -70,8 +118,10 @@ class CateListPage extends Component {
     }
 
     searchHandle=e=>{
-        e.preventDefault();
+        // e.preventDefault();
         var word = this.state.iSearch;
+        console.log(e);
+        word=e;
         if(word!==''){
             if(word==='ALL'){
                 this.props.fetchAllCategory(this.state.pageSize,this.state.pageIndex,"ALL");
@@ -80,7 +130,8 @@ class CateListPage extends Component {
                 this.props.searchCategory(this.state.pageSize,this.state.pageIndex,word);
             }
         }else{
-            console.log("Lỗi này hơi bị ghê!!!");
+            // console.log("Lỗi này hơi bị ghê!!!");
+            this.props.fetchAllCategory(this.state.pageSize,this.state.pageIndex,"ALL");
         }
         this.setState({
             listPageVisit:[],
@@ -149,7 +200,7 @@ class CateListPage extends Component {
 
                 });
             }
-        } 
+    } 
     
     onPageSizeChange=(pSize, pIndex)=>{
         var { fetchAllCategory,searchCategory } = this.props;
@@ -205,25 +256,52 @@ class CateListPage extends Component {
                 dataIndex: "productCategoryDescription",
                 key:`productCategoryDescription${updateIndex()}`,
             },
-            
             {
-                title: "Edit",
+                title: "Role",
+                dataIndex: "",
+                key:`role${updateIndex()}`,
+            },
+             
+            {
+                title: "Edit", 
                 key:`edit${updateIndex()}`,
                 dataIndex:"productCategoryCode",
-                render:(text, record, index)  => {
+                render:(text)  => {
+                    // console.log(record,index);
                     return (
                         <div className="button-table"> 
-                            <ButtonAntd 
+                            {/* <ButtonAntd 
                                 isDisabled={isDisabled} 
                                 acttype='EDIT' 
-                                ID={record.productCategoryCode}
+                                ID={text}
                                 obj="cate"
                                 pagination={[
                                     this.state.pageIndex,
                                     this.state.pageSize,
                                     this.state.iSearch
                                 ]}
-                                type="primary" shape="circle" icon="edit" />
+                                type="primary" shape="circle" icon="edit" /> */}
+                                <Button disabled={isDisabled} onClick={this.showModalEdit} type="primary" shape="circle" icon="edit" />
+                               
+                        </div>
+                        )
+                }
+            },
+            {
+                title: "Role", 
+                key:`role${updateIndex()}`,
+                dataIndex:"productCategoryCode",
+                render:(text)  => {
+                    // console.log(record,index);
+                    return (
+                        <div className="button-table"> 
+                            <SetRole 
+                                isDisabled={isDisabled} 
+                                acttype='SET_ROLE' 
+                                ID={text}
+                                obj="cate"
+                                onClickComponent={()=>{this.onDelete(text);}}
+                                 />
                         </div>
                         )
                 }
@@ -232,14 +310,13 @@ class CateListPage extends Component {
                 title: "Delete",
                 key:`delete${updateIndex()}`,
                 dataIndex:"productCategoryCode",
-                render: (text, record, index) => {
-                    // console.log(record,index);
+                render: (text) => {
                     return (
                         <div  className="button-table"> 
                             <ButtonAntd 
                                 isDisabled={isDisabled} 
                                 size="small"  acttype='DELETE' 
-                                onClickComponent={()=>{this.onDelete(record.productCategoryCode);}}
+                                onClickComponent={()=>{this.onDelete(text);}}
                                 />
                         </div>
                         )
@@ -252,6 +329,12 @@ class CateListPage extends Component {
            </div>)
         :(!categorys.includes(undefined))?
          (<div className="container-content">
+          <RegisterEdit
+                                    wrappedComponentRef={this.saveFormRefEdit}
+                                    visible={this.state.visibleEdit}
+                                    onCancel={this.handleCancelEdit}
+                                    onCreate={this.handleEdit}
+                                />
                 <div className="row">
                     <div className="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                         <div className="container-table">
@@ -259,10 +342,17 @@ class CateListPage extends Component {
                                 <div className="button-left">
                                    {
                                       (!isDisabled) ?
-                                        (
-                                            <Link to="/cate/add" className="btn btn-primary mb-5">
-                                                <i className="glyphicon glyphicon-plus"></i> Thêm Sản Phẩm
-                                            </Link>
+                                        (<div>
+                                            <Button type="primary" onClick={this.showModal}>
+                                                <Icon type="user-add" theme="outlined" />Add user 
+                                            </Button>
+                                            <Register
+                                              wrappedComponentRef={this.saveFormRef}
+                                              visible={this.state.visible}
+                                              onCancel={this.handleCancel}
+                                              onCreate={this.handleCreate}
+                                            />
+                                        </div>
                                         ):
                                         (
                                             <div>
@@ -274,17 +364,25 @@ class CateListPage extends Component {
                                     <Button style={{float:'right'}} onClick={logout}>Đăng xuất</Button>
                                 </div>
                                 <div className="button-right" >
-                                    <Form inline onSubmit={this.searchHandle}>
+                                    {/* <Form inline onSubmit={this.searchHandle}>
                                         <FormGroup controlId="formInlineName">
                                             <FormControl onChange={this.onChange} type="text" name="iSearch" ref="iSearch" placeholder="Search by word..." />
                                         </FormGroup>{' '}
                                         <Button type="submit">Search</Button>
-                                    </Form>
+                                    </Form> */}
+                                   
+                                </div>
+                                <div className="button-right" >
+                                    <Search
+                                        placeholder="Input search text"
+                                        onSearch={val=>this.searchHandle(val)}
+                                        style={{ width: 200 }}
+                                    />
                                 </div>
                             </div>
                             <br/> <br/>  <br/>
                            <div style={{width:'100%',marginTop:'30px',}}>
-                           <MyTable styleTable="TABLE_ANTD" data={categorys} col={myCol} ObjSetting={objSetting}/>
+                            <MyTable styleTable="TABLE_ANTD" data={categorys} col={myCol} ObjSetting={objSetting}/>
                            </div>
                         </div>
                     </div>
@@ -328,4 +426,4 @@ const mapDispatchToProps = (dispatch, props) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CateListPage));
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Users));

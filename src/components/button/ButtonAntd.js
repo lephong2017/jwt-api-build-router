@@ -51,6 +51,13 @@ class MyButton extends Component{
         </div>
       );
     }
+    if(this.props.acttype==='SET_ROLE'){
+      return (
+        <div>
+          <Button disabled={isDisabled} onClick={()=>{this.props.onClickComponent();}}  type="danger" shape="circle" icon="idcard" />
+        </div>
+      );
+    }
   }
 }
 

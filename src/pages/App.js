@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Switch,withRouter } from 'react-router-dom';
-
+import {PrivateRoute} from 'components/RouterProtected/PrivateRoute'
 import {adminRoutes,userRoutes} from '../routes';
 import Menu from '../components/menu/Menu';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 import { connect } from 'react-redux';
-
+import Organ from 'pages/organManagement/organ';
 import {ACCESS_TOKEN} from 'settings/sessionStorage';
 class App extends Component {
     componentDidMount(){
@@ -26,6 +26,7 @@ class App extends Component {
                         this.showContentMenus(adminRoutes):
                         this.showContentMenus(userRoutes)
                     }
+                    <PrivateRoute path="/organ" component={Organ} />
                 </div>
             </Router>
         );
@@ -47,6 +48,7 @@ class App extends Component {
                     />
                 );
             });
+            
         }
         return <Switch>{result}</Switch>;
     }

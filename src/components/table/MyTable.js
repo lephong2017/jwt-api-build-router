@@ -11,7 +11,7 @@ export default class extends Component{
                         return TableType.TableAntd(data,col,ObjSetting);
                     case 'REACT_TABLE': 
                         return TableType.TableReact(data,col,ObjSetting);
-                    default : return;
+                    default : return TableType.TableReact(data,col,ObjSetting);
                }
                })
             }

@@ -7,19 +7,17 @@ import React, { Component } from 'react';
 import {updateIndex} from 'settings/settings_key_antd';
 export default class extends Component{
     static  TableAntd =(dataSource,columns,obj) =>{
-        var currentPage=1;
        return ( <div key={`table_antd${updateIndex()}`}>
         <Table 
             pagination={
                 { 
                     pageSizeOptions: ['10', '20', '30', '40'] ,
+                    showPageSizeOptions : SVGComponentTransferFunctionElement,
                     pageSize:5,
                     onChange:( pIndex)=>{
                         obj.onPageChange( pIndex);
-                        currentPage=pIndex-1;
-                        return pIndex;
                     },
-                    current:currentPage
+                    current:obj.page
                 }
             }
             dataSource={dataSource} 
