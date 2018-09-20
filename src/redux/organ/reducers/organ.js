@@ -1,5 +1,5 @@
 import * as Types from 'redux/organ/constants/ActionType';
-
+import {organ} from 'example-data/organ';
 var organData =[
     {
         name:'Proptech Plus',
@@ -8,18 +8,21 @@ var organData =[
         phoneNumber:'01643081355'
     }
 ];
-    
-const organ = (state = organData, action) => {
-    var { organ } = action;
+   
+
+const organzation = (state = organData, action) => {
+    // var { organ } = action;
     switch (action.type) {
         case Types.ADD_ORGAN:
-            // state.push(organ);
-            return [...state];
+            return [...organData];
+        case Types.FETCHING_ORGAN:
+            console.log(organ);
+            return [...organ];
         default: return [...state];
         }
     };
 
-export default organ;
+export default organzation;
 
 
 

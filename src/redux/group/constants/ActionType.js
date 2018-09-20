@@ -1,0 +1,20 @@
+export const ADD_GROUP = 'ADD_GROUP';
+export const FETCH_GROUP = 'FETCH_GROUP';
+export const SEARCH_GROUP = 'SEARCH_GROUP';
+export const FILTER_GROUP = 'FILTER_GROUP';
+export const UPDATE_GROUP = 'UPDATE_GROUP';
+export const DELETE_GROUP = 'DELETE_GROUP';
+export const EDIT_GROUP = 'EDIT_GROUP';
+export const FIND_GROUP_BY_GROUPID = 'FIND_GROUP_BY_GROUPID';
+
+
+export const SAVE_GROUP_CODE = 'SAVE_GROUP_CODE'; 
+
+export const FETCH_GROUP_FILTER = 'FETCH_GROUP_FILTER';
+export const TOTAL_GROUP = 'TOTAL_GROUP';
+export const FETCH_GROUP_ALL = 'FETCH_GROUP_ALL';
+
+export const IS_FETCHING_GROUP = 'IS_FETCHING_GROUP';
+export const FILTER_GROUP_ORGAN = 'FILTER_GROUP_ORGAN';
+
+export const SET_SCOPE = 'SET_SCOPE';

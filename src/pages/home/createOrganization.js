@@ -58,9 +58,8 @@ class CollectionsPage extends React.Component {
     var ss =sessionStorage.getItem(ACCESS_TOKEN);
     var ssOrgan =sessionStorage.getItem('organ');
     if(ss!==null && ssOrgan!==null){
-      return <Redirect to={'/organ'} />
+      return <Redirect to={'/organ-manager'} />
     }
-    console.log(this.props.users);
     return (ss===null) ?
             (<div>
                <h1 style={{color:'red'}}>Để xem chức năng này bạn cần phải đăng nhập trước!!!</h1>

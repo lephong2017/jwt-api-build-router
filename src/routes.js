@@ -5,6 +5,7 @@ import ProductListPage from './pages/productManagement/ProductListPage/ProductLi
 import ProductActionPage from './pages/productManagement/ProductActionPage/ProductActionPage';
 import AppSecurity from 'pages/pageDemo';
 import Home from 'pages/home/createOrganization.js';
+import OrganManagement from 'pages/organManagement/index';
 // import AppSecurity from 'containers/App';
 
 export const adminRoutes = [
@@ -48,6 +49,11 @@ export const adminRoutes = [
         exact: false,
         main: ({ match, history }) => <ProductActionPage match={match} history={history} />
     },
+    {
+        path: '/organ-manager',
+        exact: false,
+        main: ({ match, history }) => <OrganManagement match={match} history={history} />
+    },
 ];
 export const userRoutes = [
     {
@@ -69,5 +75,10 @@ export const userRoutes = [
         path: '/product-list',
         exact: false,
         main: () => <ProductListPage/>
+    },
+    {
+        path: '/organ-manager',
+        exact: false,
+        main: ({ match, history }) => <OrganManagement match={match} history={history} />
     },
 ];

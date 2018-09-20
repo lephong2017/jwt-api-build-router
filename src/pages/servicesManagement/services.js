@@ -13,7 +13,7 @@ import MyTable from 'components/table/MyTable';
 import {updateIndex} from 'settings/settings_key_antd';
 import ButtonAntd from 'components/button/ButtonAntd';
 import { Input,Icon,Button } from 'antd';
-
+ 
 import {actAddUsersRequest} from 'redux/users/actions/index';
 import {Register} from './action/add';
 import {RegisterEdit} from './action/edit';
@@ -35,16 +35,11 @@ class Users extends Component {
         };
     }
     
-    showModal = () => {
-        this.setState({ visible: true });
-    }
-    showModalEdit = () => {
-        this.setState({ visibleEdit: true });
-    }
-
-    handleCancel = () => {
-        this.setState({ visible: false });
-    }
+    showModal = () =>   this.setState({ visible: true }); 
+    showModalEdit = () =>  this.setState({ visibleEdit: true }); 
+    handleCancel = () =>  this.setState({ visible: false }); 
+    saveFormRef = (formRef) =>  this.formRef = formRef; 
+    saveFormRefEdit = (formRef) =>  this.formRef = formRef; 
 
     handleCreate = () => {
         showNotification("THêm rồi","Đợi xíu đi nhen","topRight","success");
@@ -63,9 +58,7 @@ class Users extends Component {
         });
         
     }
-    handleCancelEdit = () => {
-        this.setState({ visibleEdit: false });
-    }
+    handleCancelEdit = () =>   this.setState({ visibleEdit: false });  
 
     handleEdit = () => {
         showNotification("Edit rồi","Đợi xíu đi","topRight","success");
@@ -85,13 +78,7 @@ class Users extends Component {
         
     }
 
-    saveFormRef = (formRef) => {
-        this.formRef = formRef;
-    }
-    saveFormRefEdit = (formRef) => {
-        this.formRef = formRef;
-    }
-
+    
     componentWillMount(){
         var {pageSize,pageIndex,iSearch} = this.state;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
@@ -202,37 +189,8 @@ class Users extends Component {
             }
     } 
     
-    onPageSizeChange=(pSize, pIndex)=>{
-        var { fetchAllCategory,searchCategory } = this.props;
-        this.setState({
-            pageIndex:pIndex+1,
-            pageSize:pSize,
-            listPageVisit:[],
-            listPageVisitFilter:[],
-        },
-            function(){
-                if(this.state.iSearch===0||
-                    this.state.iSearch===''||
-                    this.state.iSearch==="ALL"){
-                        fetchAllCategory(
-                            this.state.pageSize,
-                            this.state.pageIndex,
-                            "ALL"
-                        );
-                    }else{
-                        searchCategory(
-                            this.state.pageSize,
-                            this.state.pageIndex,
-                            this.state.iSearch
-                        );
-                    }
-            });                                        
-    }
-    defaultFilterMethod=(filter, row)=>{
-       return String(row[filter.id]) === filter.value;
-    }
     render() {
-        var { isFetchingCategory,categorys,scopeOfUser ,listUser} = this.props;
+        var { isFetchingCategory,categorys,scopeOfUser ,listService} = this.props;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var isDisabled = (scopeOfUser.includes("CATE.WRITE"))?false:true;
         var objSetting={
@@ -258,14 +216,24 @@ class Users extends Component {
                 key:`name${updateIndex()}`,
             },
             {
-                title: "Email",
-                dataIndex: "email",
-                key:`email${updateIndex()}`,
+                title: "Description",
+                dataIndex: "description",
+                key:`description${updateIndex()}`,
             },
             {
-                title: "Role",
-                dataIndex: "role",
-                key:`role${updateIndex()}`,
+                title: "Max",
+                dataIndex: "max",
+                key:`max${updateIndex()}`,
+            },
+            {
+                title: "Avalible",
+                dataIndex: "avaliable",
+                key:`avaliable${updateIndex()}`,
+            },
+            {
+                title: "Used",
+                dataIndex: "used",
+                key:`used${updateIndex()}`,
             },
             {
                 title: "Edit", 
@@ -279,29 +247,10 @@ class Users extends Component {
                         )
                 }
             },
-            {
-                title: "Role", 
-                key:`role${updateIndex()}`,
-                dataIndex:"productCategoryCode",
-                render:(text)  => {
-                    // console.log(record,index);
-                    return (
-                        <div className="button-table"> 
-                            <SetRole 
-                                isDisabled={isDisabled} 
-                                acttype='SET_ROLE' 
-                                ID={text}
-                                obj="cate"
-                                onClickComponent={()=>{this.onDelete(text);}}
-                                 />
-                        </div>
-                        )
-                }
-            },
             {   
                 title: "Delete",
-                key:`delete${updateIndex()}`,
-                dataIndex:"productCategoryCode",
+                key:`id${updateIndex()}`,
+                dataIndex:"id",
                 render: (text) => {
                     return (
                         <div  className="button-table"> 
@@ -336,7 +285,7 @@ class Users extends Component {
                                       (!isDisabled) ?
                                         (<div>
                                             <Button type="primary" onClick={this.showModal}>
-                                                <Icon type="user-add" theme="outlined" />Add user 
+                                                <Icon type="user-add" theme="outlined" />Add Services 
                                             </Button>
                                             <Register
                                               wrappedComponentRef={this.saveFormRef}
@@ -356,15 +305,6 @@ class Users extends Component {
                                     <Button style={{float:'right'}} onClick={logout}>Đăng xuất</Button>
                                 </div>
                                 <div className="button-right" >
-                                    {/* <Form inline onSubmit={this.searchHandle}>
-                                        <FormGroup controlId="formInlineName">
-                                            <FormControl onChange={this.onChange} type="text" name="iSearch" ref="iSearch" placeholder="Search by word..." />
-                                        </FormGroup>{' '}
-                                        <Button type="submit">Search</Button>
-                                    </Form> */}
-                                   
-                                </div>
-                                <div className="button-right" >
                                     <Search
                                         placeholder="Input search text"
                                         onSearch={val=>this.searchHandle(val)}
@@ -374,7 +314,7 @@ class Users extends Component {
                             </div>
                             <br/> <br/>  <br/>
                            <div style={{width:'100%',marginTop:'30px',}}>
-                            <MyTable styleTable="TABLE_ANTD" data={listUser} col={myCol} ObjSetting={objSetting}/>
+                                <MyTable styleTable="TABLE_ANTD" data={listService} col={myCol} ObjSetting={objSetting}/>
                            </div>
                         </div>
                     </div>
@@ -413,7 +353,6 @@ const mapDispatchToProps = (dispatch, props) => {
         setScopeOfUser: (scope) => {
             dispatch(setScopeAccess(scope));
         },
-        
 
     }
 }

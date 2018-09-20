@@ -5,7 +5,7 @@ import {adminRoutes,userRoutes} from '../routes';
 import Menu from '../components/menu/Menu';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 import { connect } from 'react-redux';
-import Organ from 'pages/organManagement/organ';
+import Organ from 'pages/organManagement/info';
 import {ACCESS_TOKEN} from 'settings/sessionStorage';
 class App extends Component {
     componentDidMount(){

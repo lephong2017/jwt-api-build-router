@@ -20,6 +20,10 @@ export default class extends Component{
                     current:obj.page
                 }
             }
+            onRow={(cylinder) =>({
+                    onClick:()=>obj.getObject(cylinder)
+                 }) 
+            }
             dataSource={dataSource} 
             columns={columns}
             loading={obj.loadding['isFetchingCategory']}

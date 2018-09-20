@@ -5,6 +5,7 @@ import 'react-table/react-table.css';
 import swal from 'sweetalert';
 import {actFetchCategoryRequest, actDeleteCategoryRequest, searchCategoryRequest} from 'redux/categoryManagement/actions/index';
 
+import {actFilterUserWithOrgan} from 'redux/users/actions/index';
 import {login,logout} from 'utils/securityAPI/apiCaller';
 import {ACCESS_TOKEN} from 'settings/sessionStorage';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
@@ -12,15 +13,19 @@ import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 import MyTable from 'components/table/MyTable';
 import {updateIndex} from 'settings/settings_key_antd';
 import ButtonAntd from 'components/button/ButtonAntd';
-import { Input,Icon,Button } from 'antd';
+import { Input,Icon,Button,Row,Col } from 'antd';
 
 import {actAddUsersRequest} from 'redux/users/actions/index';
 import {Register} from './action/add';
 import {RegisterEdit} from './action/edit';
 import {showNotification} from 'components/notification/Notification';
 import SetRole from './action/role';
-const Search = Input.Search;
+import OrganzationManagerUser from './info';
+import {actFetchingAllOrgan} from 'redux/organ/actions/index';
+import {actFilterGroupWithOrgan} from 'redux/group/actions/index';
 
+const Search = Input.Search;   
+ 
 class Users extends Component {  
     constructor(props){
         super(props);
@@ -32,9 +37,9 @@ class Users extends Component {
             listPageVisitFilter:[1],
             visible: false,
             visibleEdit: false,
+            organSelected:null
         };
     }
-    
     showModal = () => {
         this.setState({ visible: true });
     }
@@ -99,7 +104,9 @@ class Users extends Component {
         if(ss!==null){
             this.props.fetchAllCategory(pageSize,pageIndex,iSearch);
             this.props.setScopeOfUser(obj.profile['name']);
+            this.props.fetchingAllOrgan();
         }
+        this.props.fetchingAllOrgan();
     }
     onChange=e =>{
         var val =e.target.value;
@@ -201,39 +208,16 @@ class Users extends Component {
                 });
             }
     } 
-    
-    onPageSizeChange=(pSize, pIndex)=>{
-        var { fetchAllCategory,searchCategory } = this.props;
-        this.setState({
-            pageIndex:pIndex+1,
-            pageSize:pSize,
-            listPageVisit:[],
-            listPageVisitFilter:[],
-        },
-            function(){
-                if(this.state.iSearch===0||
-                    this.state.iSearch===''||
-                    this.state.iSearch==="ALL"){
-                        fetchAllCategory(
-                            this.state.pageSize,
-                            this.state.pageIndex,
-                            "ALL"
-                        );
-                    }else{
-                        searchCategory(
-                            this.state.pageSize,
-                            this.state.pageIndex,
-                            this.state.iSearch
-                        );
-                    }
-            });                                        
-    }
-    defaultFilterMethod=(filter, row)=>{
-       return String(row[filter.id]) === filter.value;
+    getOrgan=(organ)=>{
+        // console.log(organ);
+        this.setState({organSelected:organ});
+         this.props.filterOrgan(organ);
+         this.props.filterGroup(organ);
     }
     render() {
-        var { isFetchingCategory,categorys,scopeOfUser ,listUser} = this.props;
+        var { isFetchingCategory,categorys,scopeOfUser,organs } = this.props;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
+        var {organSelected} = this.state;
         var isDisabled = (scopeOfUser.includes("CATE.WRITE"))?false:true;
         var objSetting={
             loadding:{isFetchingCategory},
@@ -244,76 +228,65 @@ class Users extends Component {
             className: "-striped -highlight",
             page:this.state.pageIndex,
             pageSize:this.state.pageSize,
-            getObject:()=>{console.log("")}
+            getObject:this.getOrgan
         }
         var myCol=[
             {
                 title: "ID",
-                dataIndex: "id",
-                key:`id${updateIndex()}`,
+                dataIndex: "productCategoryCode",
+                key:`productCategoryCode${updateIndex()}`,
             },
             {
-                title: "Name",
-                dataIndex: "name",
-                key:`name${updateIndex()}`,
+                title: "Description",
+                dataIndex: "productCategoryDescription",
+                key:`productCategoryDescription${updateIndex()}`,
             },
-            {
-                title: "Email",
-                dataIndex: "email",
-                key:`email${updateIndex()}`,
-            },
-            {
-                title: "Role",
-                dataIndex: "role",
-                key:`role${updateIndex()}`,
-            },
+             
             {
                 title: "Edit", 
                 key:`edit${updateIndex()}`,
-                dataIndex:"id",
-                render:(text)  => {
-                    return (
-                        <div className="button-table"> 
-                                <Button disabled={isDisabled} onClick={this.showModalEdit} type="primary" shape="circle" icon="edit" />
-                        </div>
-                        )
-                }
-            },
-            {
-                title: "Role", 
-                key:`role${updateIndex()}`,
                 dataIndex:"productCategoryCode",
+                align:'center',
                 render:(text)  => {
                     // console.log(record,index);
                     return (
                         <div className="button-table"> 
-                            <SetRole 
-                                isDisabled={isDisabled} 
-                                acttype='SET_ROLE' 
-                                ID={text}
-                                obj="cate"
-                                onClickComponent={()=>{this.onDelete(text);}}
-                                 />
+                            <Button disabled={isDisabled} onClick={this.showModalEdit} type="primary" shape="circle" icon="edit" />
                         </div>
                         )
                 }
             },
-            {   
-                title: "Delete",
-                key:`delete${updateIndex()}`,
-                dataIndex:"productCategoryCode",
-                render: (text) => {
+           ];
+         var  organCol=[
+            {
+                title: "Name",
+                dataIndex: "organName",
+                key:`organName${updateIndex()}`,
+            },
+            {
+                title: "Description",
+                dataIndex: "description",
+                key:`description${updateIndex()}`,
+            },
+            {
+                title: "Address",
+                dataIndex: "address",
+                key:`address${updateIndex()}`,
+            },
+            {
+                title: "Edit", 
+                key:`id${updateIndex()}`,
+                dataIndex:"id",
+                align:'center',
+                render:(text)  => {
                     return (
-                        <div  className="button-table"> 
-                            <ButtonAntd 
-                                isDisabled={isDisabled} 
-                                size="small"  acttype='DELETE' 
-                                onClickComponent={()=>{this.onDelete(text);}}
-                                />
+                        <div className="button-table"> 
+                            <Button disabled={isDisabled} onClick={this.showModalEdit} type="primary" shape="circle" icon="edit" />
                         </div>
                         )
-                } 
-            }];
+                }
+            },
+         ];
        return (ss===null) ?
             (<div>
                <h1 style={{color:'red'}}>Để xem chức năng này bạn cần phải đăng nhập trước!!!</h1>
@@ -321,7 +294,7 @@ class Users extends Component {
            </div>)
         :(!categorys.includes(undefined))?
          (<div className="container-content">
-          <RegisterEdit
+            <RegisterEdit
                 wrappedComponentRef={this.saveFormRefEdit}
                 visible={this.state.visibleEdit}
                 onCancel={this.handleCancelEdit}
@@ -336,7 +309,7 @@ class Users extends Component {
                                       (!isDisabled) ?
                                         (<div>
                                             <Button type="primary" onClick={this.showModal}>
-                                                <Icon type="user-add" theme="outlined" />Add user 
+                                                <Icon type="user-add" theme="outlined" />Add Organzation 
                                             </Button>
                                             <Register
                                               wrappedComponentRef={this.saveFormRef}
@@ -356,15 +329,6 @@ class Users extends Component {
                                     <Button style={{float:'right'}} onClick={logout}>Đăng xuất</Button>
                                 </div>
                                 <div className="button-right" >
-                                    {/* <Form inline onSubmit={this.searchHandle}>
-                                        <FormGroup controlId="formInlineName">
-                                            <FormControl onChange={this.onChange} type="text" name="iSearch" ref="iSearch" placeholder="Search by word..." />
-                                        </FormGroup>{' '}
-                                        <Button type="submit">Search</Button>
-                                    </Form> */}
-                                   
-                                </div>
-                                <div className="button-right" >
                                     <Search
                                         placeholder="Input search text"
                                         onSearch={val=>this.searchHandle(val)}
@@ -373,9 +337,21 @@ class Users extends Component {
                                 </div>
                             </div>
                             <br/> <br/>  <br/>
-                           <div style={{width:'100%',marginTop:'30px',}}>
-                            <MyTable styleTable="TABLE_ANTD" data={listUser} col={myCol} ObjSetting={objSetting}/>
-                           </div>
+                            <Row type="flex" justify="center">
+                                <div style={{width:'100%',margin:'10px',}}>
+                                    <MyTable styleTable="TABLE_ANTD" data={organs} col={organCol} ObjSetting={objSetting}/>
+                                </div>
+                                {
+                                    (organSelected!==null)?
+                                    <div style={{width:'100%',margin:'10px',}}>
+                                        <OrganzationManagerUser organ={this.state.organSelected}/>
+                                    </div>
+                                    :
+                                    <div>
+
+                                    </div>
+                                }
+                            </Row>
                         </div>
                     </div>
                 </div>
@@ -396,6 +372,7 @@ const mapStateToProps = state => {
         categorys: state.categorys_index,
         isFetchingCategory:state.isFetchingCategory,
         scopeOfUser : state.scopeOfUser,
+        organs: state.organs,
     }
 }
 
@@ -413,7 +390,15 @@ const mapDispatchToProps = (dispatch, props) => {
         setScopeOfUser: (scope) => {
             dispatch(setScopeAccess(scope));
         },
-        
+        fetchingAllOrgan:()=>{
+            dispatch(actFetchingAllOrgan());
+        },
+        filterOrgan: (organ) => {
+            dispatch(actFilterUserWithOrgan(organ));
+        },
+        filterGroup:(organ)=>{
+            dispatch(actFilterGroupWithOrgan(organ));
+        }
 
     }
 }

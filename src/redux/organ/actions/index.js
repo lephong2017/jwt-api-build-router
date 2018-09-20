@@ -22,3 +22,14 @@ export const actAddOrgan = (organ) => {
         organ
     }
 }
+export const actFetchingAllOrgan = () => {
+    return (dispatch) => {
+        dispatch(fetchingOrgan());
+    }
+}
+
+export const fetchingOrgan = () => {
+    return {
+        type: Types.FETCHING_ORGAN,
+    }
+}

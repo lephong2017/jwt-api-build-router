@@ -1,6 +1,6 @@
 import * as Types from 'redux/categoryManagement/constants/ActionType';
 
-var arr =[]
+var arr =[] 
 var catesData = [];
 const products = (state = catesData, action) => {
     var { product } = action;

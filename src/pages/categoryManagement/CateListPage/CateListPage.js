@@ -192,7 +192,8 @@ class CateListPage extends Component {
             onPageSizeChange:this.onPageSizeChange,
             className: "-striped -highlight",
             page:this.state.pageIndex,
-            pageSize:this.state.pageSize
+            pageSize:this.state.pageSize,
+            getObject:()=>{console.log("")}
         }
         var myCol=[
             {

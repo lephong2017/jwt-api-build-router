@@ -3,11 +3,7 @@ import { Link, Route } from 'react-router-dom';
 import { createBrowserHistory } from "history";
 const history = createBrowserHistory();
 const menus = [
-    {
-        name: 'Organ',
-        to: '/organ',
-        exact: true
-    },
+    
     {
         name : 'Category',
         to : '/cate-list',
@@ -23,11 +19,11 @@ const menus = [
         to : '/home',
         exact : false
     },
-    // {
-    //     name : 'Identity',
-    //     to : '/security-api',
-    //     exact : false
-    // },
+    {
+        name : 'Management Organzation',
+        to : '/organ-manager',
+        exact : true
+    },
    
 ]
 

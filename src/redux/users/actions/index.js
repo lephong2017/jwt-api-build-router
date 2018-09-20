@@ -1,6 +1,26 @@
 import * as Types from './../constants/ActionType';
 // import {callApis} from 'utils/securityAPI/apiCaller';
 import callApis from 'utils/CallAPI/apiCallerS';
+
+export const actFilterUserWithOrgan = (organ) => {
+    console.log("da goi api");
+    return (dispatch) => {
+        dispatch(filterUser(organ));
+        return callApis('Users/createUsers', 'POST', organ).then(res => {
+
+            console.log(res.data);
+            if(res.data===true){
+                dispatch(filterUser(organ));
+            }
+        }).catch(error => console.log("Fetch Error "+ error));
+    }
+}
+export const filterUser = (organ) => {
+    return {
+        type: Types.FILTER_USER_ORGAN,
+        organ
+    }
+}
 export const actAddUsersRequest = (Users) => {
     console.log("da goi api");
     return (dispatch) => {
@@ -37,7 +57,7 @@ export const   actFetchUserRequest = (pageSize,pageIndex,StringFilter) => {
 
 export const actFetchUser = (User,pageIndex,pageSize,totalData) => {
     return {
-        type: Types.FETCH_UserS,
+        type: Types.FETCH_USER,
         User,
         pageIndex,
         pageSize,
@@ -46,7 +66,7 @@ export const actFetchUser = (User,pageIndex,pageSize,totalData) => {
 };
 export const actFetchUserFilter = (User,pageSize,pageIndex,totalData) => {
     return {
-        type: Types.FETCH_UserS_FILTER,
+        type: Types.FETCH_USER_FILTER,
         User,
         pageSize,
         pageIndex,
@@ -55,7 +75,7 @@ export const actFetchUserFilter = (User,pageSize,pageIndex,totalData) => {
 };
 export const actFetching = (isFetching) => {
     return {
-        type: Types.IS_FETCHING_CATE,
+        type: Types.IS_FETCHING_USER,
        isFetching
     }
 };
@@ -125,7 +145,7 @@ export const actDeleteUserRequest = (id,pageSize,pageIndex,StringFilter) => {
 
 export const actDeleteUser = (id) => {
     return {
-        type: Types.DELETE_User,
+        type: Types.DELETE_USER,
         id
     }
 }

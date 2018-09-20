@@ -6,9 +6,9 @@ export default class App extends React.Component {
     visible: false,
     edit:false,
     listRole:[],
-    checkBoxRole:[],
+    checkBoxRole:[],  
   }
-  componentWillMount(){
+  componentWillMount(){ 
       
       this.setState({listRole:ListOfRole});
   }

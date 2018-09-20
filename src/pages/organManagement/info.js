@@ -1,16 +1,19 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Redirect ,withRouter} from 'react-router-dom';
 import { connect } from 'react-redux';
 import 'react-table/react-table.css';
 import {actAddOrganRequest} from 'redux/organ/actions/index';
-
+import {actFilterUserWithOrgan} from 'redux/users/actions/index';
 import {ACCESS_TOKEN} from 'settings/sessionStorage';
 
-import {FormEdit} from './form/formEdit';
-import {Button,Row, Col,Icon} from 'antd';
-import MyTable from 'components/table/MyTable';
+import {FormEdit} from 'pages/organManagement/form/formEdit';
+import {Button,Row, Col,Icon,Tabs} from 'antd';
+// import MyTable from 'components/table/MyTable';
 import  Users  from 'pages/usersManagement/users';
-class Organ extends Component {  
+import Group from 'pages/groupManagement/group';
+import Services from 'pages/servicesManagement/services';
+const TabPane = Tabs.TabPane;
+class Organ extends React.Component {  
     constructor(props){
         super(props);
         this.state={
@@ -19,12 +22,16 @@ class Organ extends Component {
         };
     }
     componentWillMount(){
-        this.props.updateOrgan("null");
+        // this.props.updateOrgan("null");
+       
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var ssOrgan =sessionStorage.getItem('organ');
         if(ss!==null && ssOrgan!==null){
             return <Redirect to={'/organ'} />
         }
+    }
+    componentDidMount(){
+      
     }
     onChange=e =>{
         var val =e.target.value;
@@ -47,40 +54,42 @@ class Organ extends Component {
     handleSubmit=(e)=>{
         e.preventDefault();
         const form = this.formRef.props.form;
-        let organ = {}
-        // this.setState({edit:false});
+        // var organ = {}
+        this.setState({edit:false});
         form.validateFields((err, values) => {
             if (err) {
                 console.log(err);
                 return;
             }
-            organ=values;
+            // organ=values;
             console.log('Received values of form: ', values);
             // form.resetFields();
             // this.props.updateOrgan(organ);
         });
     }
     render() {
+        
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var ssOrgan =sessionStorage.getItem('organ');
         var {edit,show} = this.state;
+        var {users,group,service} =this.props;
         if(ss===null && ssOrgan===null){
             return <Redirect to={'/organ'} />
         }
-        var organ =this.props.organ[0];
+        var organ =this.props.organ;
         return (edit)?(
-            <div className="row">
+            <Row type="flex" justify="center">
                 <FormEdit  wrappedComponentRef={this.saveFormRef} Object={organ} handleSubmit={this.handleSubmit}/>
-            </div>
+            </Row>
         ):(
             <div> 
                 <Row type="flex" justify="center">
                     <Col span={4}>Organzation name: </Col>
-                    <Col span={8}>{organ.name}</Col>
+                    <Col span={8}>{organ.organName}</Col>
                 </Row>
                 <Row type="flex" justify="center">
                     <Col span={4}>Description</Col>
-                    <Col span={8}>{organ.describe}</Col>
+                    <Col span={8}>{organ.description}</Col>
                 </Row>
                 <Row type="flex" justify="center">
                     <Col span={4}>Address </Col>
@@ -94,14 +103,34 @@ class Organ extends Component {
                     <Button onClick={()=>this.setState({edit:!this.state.edit})} type="primary" >
                         <Icon type="edit" theme="outlined" /> Edit
                     </Button>{'  '}
-                    <Button onClick={()=>this.setState({show:!this.state.show})} type="primary" >
+                    <Button onClick={()=>{
+                            this.setState({show:!this.state.show});
+                           
+                        }} type="primary" >
                         <Icon type="setting" theme="outlined" /> Settings
                     </Button>
                 </div>
                 {
                     (show)?
                         <div>
-                             <Users/>
+                             <Tabs
+                                defaultActiveKey="1"
+                                tabPosition='left'
+                                // style={{ height: 220 }}
+                                >
+                                <TabPane tab={<span><Icon type="users" />User</span>} key="1">
+                                     <Users listUser={users}/>
+                                </TabPane>
+                                <TabPane tab={<span><Icon type="users" />Group</span>} key="2">
+                                    <Group listGroup={group}/>
+                                </TabPane>
+                                <TabPane tab={<span><Icon type="users" />Services</span>} key="3">
+                                    <Services listServices={service}/>
+                                </TabPane>
+                                <TabPane tab={<span><Icon type="users" />Demo</span>} key="4">
+                                    I am updating...
+                                </TabPane>
+                            </Tabs>
                         </div>
                         :<div></div>
                 }
@@ -112,7 +141,10 @@ class Organ extends Component {
 }
 const mapStateToProps = state => {
     return {
-        organ: state.organ,
+        organs: state.organs,
+        users: state.users,
+        group:state.group,
+        service:state.service,
     }
 }
 
@@ -120,7 +152,10 @@ const mapDispatchToProps = (dispatch, props) => {
     return {
         updateOrgan: (organ) => {
             dispatch(actAddOrganRequest(organ));
-      },
+        },
+        filterOrgan: (organ) => {
+            dispatch(actFilterUserWithOrgan(organ));
+        },
     }
 }
 
