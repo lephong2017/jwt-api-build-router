@@ -3,25 +3,19 @@ import { Link, Route } from 'react-router-dom';
 import { createBrowserHistory } from "history";
 const history = createBrowserHistory();
 const menus = [
-    
-    {
-        name : 'Category',
-        to : '/cate-list',
-        exact : false
-    },
-    {
-        name : 'Products',
-        to : '/product-list',
-        exact : false
-    },
-    {
-        name : 'Home',
-        to : '/home',
-        exact : false
-    },
     {
         name : 'Management Organzation',
         to : '/organ-manager',
+        exact : true
+    },
+    {
+        name : 'Login',
+        to : '/login',
+        exact : true
+    },
+    {
+        name : 'Register',
+        to : '/register',
         exact : true
     },
    

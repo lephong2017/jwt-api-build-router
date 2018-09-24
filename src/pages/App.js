@@ -1,19 +1,18 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Switch,withRouter } from 'react-router-dom';
-import {PrivateRoute} from 'components/RouterProtected/PrivateRoute'
-import {adminRoutes,userRoutes} from '../routes';
+// import {PrivateRoute} from 'components/RouterProtected/PrivateRoute'
+import {adminRoutes} from '../routes';
 import Menu from '../components/menu/Menu';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 import { connect } from 'react-redux';
-import Organ from 'pages/organManagement/info';
-import {ACCESS_TOKEN} from 'settings/sessionStorage';
+// import {USERS} from 'settings/sessionStorage';
 class App extends Component {
     componentDidMount(){
-        var ss =sessionStorage.getItem(ACCESS_TOKEN);
-        var obj = JSON.parse(ss);
-        if(ss!==null){
-            this.props.setScopeOfUser(obj.profile['name']);
-        } 
+        // var ss =sessionStorage.getItem(USERS);
+        // var obj = JSON.parse(ss);
+        // if(ss!==null){
+        //     this.props.setScopeOfUser(obj.profile['name']);
+        // } 
        
     }
     render() {
@@ -22,11 +21,10 @@ class App extends Component {
                 <div className="container-crud">
                     <Menu />
                     {
-                        this.props.scopeOfUser.includes("PRODUCT.WRITE")||this.props.scopeOfUser.includes("CATE.WRITE")?
-                        this.showContentMenus(adminRoutes):
-                        this.showContentMenus(userRoutes)
+                        // this.props.scopeOfUser.includes("PRODUCT.WRITE")||this.props.scopeOfUser.includes("CATE.WRITE")?
+                        this.showContentMenus(adminRoutes)
+                        // this.showContentMenus(userRoutes)
                     }
-                    <PrivateRoute path="/organ" component={Organ} />
                 </div>
             </Router>
         );

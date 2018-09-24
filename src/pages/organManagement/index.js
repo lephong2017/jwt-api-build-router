@@ -1,31 +1,61 @@
 import React, { Component } from 'react';
-import { withRouter} from 'react-router-dom';
+import { withRouter,Link} from 'react-router-dom';
 import { connect } from 'react-redux';
 import 'react-table/react-table.css';
 import swal from 'sweetalert';
-import {actFetchCategoryRequest, actDeleteCategoryRequest, searchCategoryRequest} from 'redux/categoryManagement/actions/index';
-
 import {actFilterUserWithOrgan} from 'redux/users/actions/index';
-import {login,logout} from 'utils/securityAPI/apiCaller';
-import {ACCESS_TOKEN} from 'settings/sessionStorage';
+import {ACCESS_TOKEN,USERS} from 'settings/sessionStorage';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 
 import MyTable from 'components/table/MyTable';
 import {updateIndex} from 'settings/settings_key_antd';
-import ButtonAntd from 'components/button/ButtonAntd';
-import { Input,Icon,Button,Row,Col } from 'antd';
+import { Input,Icon,Button,Row,Col ,Tabs,Modal } from 'antd';
 
-import {actAddUsersRequest} from 'redux/users/actions/index';
-import {Register} from './action/add';
-import {RegisterEdit} from './action/edit';
+// import {actAddUsersRequest} from 'redux/users/actions/index';
 import {showNotification} from 'components/notification/Notification';
-import SetRole from './action/role';
-import OrganzationManagerUser from './info';
-import {actFetchingAllOrgan} from 'redux/organ/actions/index';
-import {actFilterGroupWithOrgan} from 'redux/group/actions/index';
+import {actFetchOrganRequest,searchOrganRequest,actAddOrganRequest,actUpdateOrganRequest,actDeleteOrganRequest} from 'redux/organ/actions/index';
 
+import {actFilterGroupWithOrgan} from 'redux/group/actions/index';
+import {handleLogout} from 'redux/users/actions/user';
+import MyForm from 'components/MyForm/MyForm';
 const Search = Input.Search;   
- 
+const TabPane = Tabs.TabPane;
+const listFieldAddOrgan=[
+    {
+        id:"nameOrganization",
+        label:"Organization name:",
+        description:"Tên của tổ chức bạn!",
+        icon:"user",
+        placeholder:"Enter your organization name...",
+        required:true,
+        message:'Vui lòng nhập organization name',
+        defaultValue:"Proptech Plus",
+        event:{
+            onClick:()=>console.log("event onClick "),
+            onChange:()=>console.log("event onChange "),
+        },
+        fieldType:{
+            type:"INPUT_TEXT",
+        }
+    },
+    {
+        id:"displayNameDb",
+        label:"Database name:",
+        description:"Bạn cần đặt tên database cho tổ chức bạn.",
+        icon:"lock",
+        placeholder:"Enter your database name...",
+        required:true,
+        message:'Vui lòng nhập database name',
+        defaultValue:"proptechplusDB",
+        event:{
+            onClick:()=>console.log("event onClick "),
+            onChange:()=>console.log("event onChange "),
+        },
+        fieldType:{
+            type:"INPUT_TEXT",
+        }
+    },
+  ]
 class Users extends Component {  
     constructor(props){
         super(props);
@@ -36,77 +66,26 @@ class Users extends Component {
             listPageVisit:[1],
             listPageVisitFilter:[1],
             visible: false,
-            visibleEdit: false,
-            organSelected:null
+            organSelected:null,
+            show:false,
+            edit:false,
         };
     }
     showModal = () => {
         this.setState({ visible: true });
-    }
-    showModalEdit = () => {
-        this.setState({ visibleEdit: true });
     }
 
     handleCancel = () => {
         this.setState({ visible: false });
     }
 
-    handleCreate = () => {
-        showNotification("THêm rồi","Đợi xíu đi nhen","topRight","success");
-        const form = this.formRef.props.form;
-        let user = {}
-        form.validateFields((err, values) => {
-            if (err) {
-                return;
-            }
-            user=values;
-            console.log('Received values of form: ', values);
-            form.resetFields();
-            this.setState({ visible: false });
-            showNotification("Success","Đã gọi API rồi, yên tâm đi, đợi xí!!!","topRight","success");
-            actAddUsersRequest(user);
-        });
-        
-    }
-    handleCancelEdit = () => {
-        this.setState({ visibleEdit: false });
-    }
-
-    handleEdit = () => {
-        showNotification("Edit rồi","Đợi xíu đi","topRight","success");
-        const form = this.formRef.props.form;
-        let user = {}
-        form.validateFields((err, values) => {
-            if (err) {
-                return;
-            }
-            user=values;
-            console.log('Received values of form: ', values);
-            form.resetFields();
-            this.setState({ visible: false });
-            showNotification("Success","Đã gọi API rồi, yên tâm đi, đợi xí!!!","topRight","success");
-            actAddUsersRequest(user);
-        });
-        
-    }
-
-    saveFormRef = (formRef) => {
-        this.formRef = formRef;
-    }
-    saveFormRefEdit = (formRef) => {
-        this.formRef = formRef;
-    }
-
     componentWillMount(){
         var {pageSize,pageIndex,iSearch} = this.state;
-        var ss =sessionStorage.getItem(ACCESS_TOKEN);
-        var obj = JSON.parse(ss);
-        if(ss!==null){
-            this.props.fetchAllCategory(pageSize,pageIndex,iSearch);
-            this.props.setScopeOfUser(obj.profile['name']);
-            this.props.fetchingAllOrgan();
+        var ss =sessionStorage.getItem(USERS);
+        var accesstoken =sessionStorage.getItem(ACCESS_TOKEN);
+        if(ss!==null && accesstoken!=null){
+            this.props.fetchingAllOrgan(pageSize,pageIndex,iSearch);
         }
-        this.props.fetchingAllOrgan();
     }
     onChange=e =>{
         var val =e.target.value;
@@ -127,18 +106,17 @@ class Users extends Component {
     searchHandle=e=>{
         // e.preventDefault();
         var word = this.state.iSearch;
-        console.log(e);
         word=e;
+        var accesstoken= sessionStorage.getItem(ACCESS_TOKEN);
         if(word!==''){
             if(word==='ALL'){
-                this.props.fetchAllCategory(this.state.pageSize,this.state.pageIndex,"ALL");
+                this.props.fetchingAllOrgan(this.state.pageSize,this.state.pageIndex,"ALL",accesstoken);
             }else{
-                console.log(word+" is word search, pageSize: "+this.state.pageSize+" pageInd: "+this.state.pageIndex);
-                this.props.searchCategory(this.state.pageSize,this.state.pageIndex,word);
+                this.props.searchOrgan(this.state.pageSize,this.state.pageIndex,word,accesstoken);
             }
         }else{
             // console.log("Lỗi này hơi bị ghê!!!");
-            this.props.fetchAllCategory(this.state.pageSize,this.state.pageIndex,"ALL");
+            this.props.fetchingAllOrgan(this.state.pageSize,this.state.pageIndex,"ALL",accesstoken);
         }
         this.setState({
             listPageVisit:[],
@@ -147,8 +125,8 @@ class Users extends Component {
        
     }
     onDelete = (id) => { 
-        // console.log(id);
-        var {onDeleteCategory} = this.props;
+        showNotification("Xóa rồi","Đợi xíu đi","topRight","success");
+        var accesstoken = sessionStorage.getItem(ACCESS_TOKEN);
         swal({
             title: "Are you sure?",
             text: "Once deleted, you will not be able to recover this imaginary file!",
@@ -158,7 +136,7 @@ class Users extends Component {
         })
         .then((willDelete) => {
             if (willDelete) {
-                onDeleteCategory(id,this.state.pageSize,this.state.pageIndex,this.state.iSearch);
+                this.props.deleteOrgan(id,this.state.pageSize,this.state.pageIndex,this.state.iSearch,accesstoken);
                 swal("Poof! Your imaginary file has been deleted!", {
                     icon: "success",
                 });
@@ -168,7 +146,7 @@ class Users extends Component {
         });
     }
     onPageChange=(pageInd)=>{
-        var { fetchAllCategory,searchCategory } = this.props;
+        var { fetchingAllOrgan,searchOrgan } = this.props;
         var stringFilter = this.state.iSearch;
         if(stringFilter===''||stringFilter==="ALL"){
             var pageVisit = this.state.listPageVisit;
@@ -182,7 +160,7 @@ class Users extends Component {
                 if(isPageVisit===false){
                     pageVisit.push(pageInd);
                     this.setState({listPageVisit:pageVisit, });
-                    fetchAllCategory(
+                    fetchingAllOrgan(
                         this.state.pageSize,
                         this.state.pageIndex,
                         "ALL"
@@ -198,7 +176,7 @@ class Users extends Component {
                     if(isPageVisit===false){
                         pageVisit.push(pageInd);
                         this.setState({listPageVisitFilter:pageVisit, });
-                        searchCategory(
+                        searchOrgan(
                             this.state.pageSize,
                             this.state.pageIndex,
                             stringFilter
@@ -209,16 +187,46 @@ class Users extends Component {
             }
     } 
     getOrgan=(organ)=>{
-        // console.log(organ);
         this.setState({organSelected:organ});
          this.props.filterOrgan(organ);
          this.props.filterGroup(organ);
     }
+    handleSubmit = (e,props) => {
+        showNotification("Edit rồi","Đợi xíu đi","topRight","success");
+        e.preventDefault();
+        this.setState({btnLoadding:true});
+        const {pageIndex,pageSize,iSearch,organSelected} = this.state;
+        var accesstoken = sessionStorage.getItem(ACCESS_TOKEN);
+        this.setState({listPageVisit:[1]});
+        props.form.validateFields((err, val) => {
+          if (!err) { 
+            console.log('Received values of form: ', val);
+            this.props.updateOrgan(organSelected.idOrganization,val,pageIndex,pageSize,iSearch,accesstoken);
+            this.setState({btnLoadding:false,visible:false,edit:false,organSelected:null});
+          }
+        });
+        
+      }
+
+    handleAddOrgan = (e,props) => {
+        showNotification("Add rồi","Đợi xíu đi","topRight","success");
+        e.preventDefault();
+        this.setState({btnLoadding:true});
+        const {pageIndex,pageSize,iSearch} = this.state;
+        props.form.validateFields((err, organ) => {
+            if (!err) {
+                console.log('Received values of form: ', organ);
+                this.props.createNewOrgan(organ,pageIndex,pageSize,iSearch,this.props.accesstoken);
+                this.setState({btnLoadding:false,visible:false});
+            }
+        });
+        
+    }
     render() {
-        var { isFetchingCategory,categorys,scopeOfUser,organs } = this.props;
-        var ss =sessionStorage.getItem(ACCESS_TOKEN);
-        var {organSelected} = this.state;
-        var isDisabled = (scopeOfUser.includes("CATE.WRITE"))?false:true;
+        var { isFetchingCategory,categorys,organs } = this.props;
+        var username =sessionStorage.getItem(USERS);
+        var {organSelected,edit,show} = this.state;
+        var isDisabled = false;
         var objSetting={
             loadding:{isFetchingCategory},
             defaultFilterMethod:this.defaultFilterMethod,
@@ -230,76 +238,147 @@ class Users extends Component {
             pageSize:this.state.pageSize,
             getObject:this.getOrgan
         }
-        var myCol=[
-            {
-                title: "ID",
-                dataIndex: "productCategoryCode",
-                key:`productCategoryCode${updateIndex()}`,
-            },
-            {
-                title: "Description",
-                dataIndex: "productCategoryDescription",
-                key:`productCategoryDescription${updateIndex()}`,
-            },
-             
-            {
-                title: "Edit", 
-                key:`edit${updateIndex()}`,
-                dataIndex:"productCategoryCode",
-                align:'center',
-                render:(text)  => {
-                    // console.log(record,index);
-                    return (
-                        <div className="button-table"> 
-                            <Button disabled={isDisabled} onClick={this.showModalEdit} type="primary" shape="circle" icon="edit" />
-                        </div>
-                        )
-                }
-            },
-           ];
          var  organCol=[
+             {
+                 title: "id",
+                 dataIndex: "idOrganization",
+                 key:`idOrganization${updateIndex()}`,
+             },
             {
                 title: "Name",
-                dataIndex: "organName",
-                key:`organName${updateIndex()}`,
+                dataIndex: "nameOrganization",
+                key:`nameOrganization${updateIndex()}`,
             },
             {
-                title: "Description",
-                dataIndex: "description",
-                key:`description${updateIndex()}`,
+                title: "Display Name Database",
+                dataIndex: "displayNameDb",
+                key:`displayNameDb${updateIndex()}`,
+            },
+            // {
+            //     title: "Edit", 
+            //     key:`id${updateIndex()}`,
+            //     dataIndex:"id",
+            //     align:'center',
+            //     render:(text)  => {
+            //         return (
+            //             <div className="button-table"> 
+            //                 <Button disabled={isDisabled} onClick={this.showModalEdit} type="primary" shape="circle" icon="edit" />
+            //             </div>
+            //             )
+            //     }
+            // },
+         ];
+         const listButton=[
+            {
+                name:"Submit",
+                title:"Submit",
+                description:"Submit data from your form",
+                loading:this.state.btnLoadding,
+                events:{
+                    onSubmit: ()=>console.log("submit form login"),
+                },
+                styles:{
+                    color:'cyan',
+                    margin:'5px'
+                },
+                type:"SUBMIT",
+                icon:"save",
+                typeButon:"primary"
             },
             {
-                title: "Address",
-                dataIndex: "address",
-                key:`address${updateIndex()}`,
+                name:"Back",
+                title:"Back",
+                description:"Back",
+                // link:this.props.router.location.pathname,
+                onClick:()=>this.setState({edit:false}),
+                events:()=>console.log("event form"),
+                styles:{
+                    color:'red',
+                    margin:'5px'
+                },
+                type:"BACK",
+                icon:"rollback",
+                typeButon:"primary"
             },
+        ]
+        const listField=[
             {
-                title: "Edit", 
-                key:`id${updateIndex()}`,
-                dataIndex:"id",
-                align:'center',
-                render:(text)  => {
-                    return (
-                        <div className="button-table"> 
-                            <Button disabled={isDisabled} onClick={this.showModalEdit} type="primary" shape="circle" icon="edit" />
-                        </div>
-                        )
+                id:"nameOrganization",
+                label:"Organization name:",
+                description:"Tên của tổ chức bạn!",
+                icon:"user",
+                placeholder:"Enter your organization name...",
+                required:true,
+                message:'Vui lòng nhập organization name',
+                defaultValue:(organSelected!==null)?organSelected.nameOrganization:"",
+                event:{
+                    onClick:()=>console.log("event onClick "),
+                    onChange:()=>console.log("event onChange "),
+                },
+                fieldType:{
+                    type:"INPUT_TEXT",
                 }
             },
-         ];
-       return (ss===null) ?
+            {
+                id:"displayNameDB",
+                label:"Database name:",
+                description:"Bạn cần đặt tên database cho tổ chức bạn.",
+                icon:"lock",
+                placeholder:"Enter your database name...",
+                required:true,
+                message:'Vui lòng nhập database name',
+                defaultValue:(organSelected!==null)?organSelected.displayNameDb:"",
+                event:{
+                    onClick:()=>console.log("event onClick "),
+                    onChange:()=>console.log("event onChange "),
+                },
+                fieldType:{
+                    type:"INPUT_TEXT",
+                }
+            },
+          ];
+          const listButtonOrgan=[
+            {
+                name:"Submit",
+                title:"Submit",
+                description:"Submit data from your form",
+                loading:this.state.btnLoadding,
+                events:{
+                    onSubmit: ()=>console.log("submit form login"),
+                },
+                styles:{
+                    color:'cyan',
+                    margin:'5px'
+                },
+                type:"SUBMIT",
+                icon:"save",
+                typeButon:"primary"
+            },
+            {
+                name:"Back",
+                title:"Back",
+                description:"Back",
+                link:this.props.router.location.pathname,
+                onClick:()=>console.log("back"),
+                events:()=>console.log("event form"),
+                styles:{
+                    color:'red',
+                    margin:'5px'
+                },
+                type:"BACK",
+                icon:"rollback",
+                typeButon:"primary"
+            },
+        ]
+         return (username===null) ?
             (<div>
                <h1 style={{color:'red'}}>Để xem chức năng này bạn cần phải đăng nhập trước!!!</h1>
-                <Button bsStyle="success" onClick={login}>Đăng nhập</Button>
+               <Link to={"/login"}>
+                    <Button bsStyle="success" >Đăng nhập</Button>
+               </Link>
            </div>)
         :(!categorys.includes(undefined))?
          (<div className="container-content">
-            <RegisterEdit
-                wrappedComponentRef={this.saveFormRefEdit}
-                visible={this.state.visibleEdit}
-                onCancel={this.handleCancelEdit}
-                onCreate={this.handleEdit}
-            />
                 <div className="row">
                     <div className="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                         <div className="container-table">
@@ -311,12 +390,23 @@ class Users extends Component {
                                             <Button type="primary" onClick={this.showModal}>
                                                 <Icon type="user-add" theme="outlined" />Add Organzation 
                                             </Button>
-                                            <Register
-                                              wrappedComponentRef={this.saveFormRef}
-                                              visible={this.state.visible}
-                                              onCancel={this.handleCancel}
-                                              onCreate={this.handleCreate}
-                                            />
+                                            <Modal
+                                                visible={this.state.visible}
+                                                title="Create a new organization"
+                                                okText="Create"
+                                                onOk={()=>this.setState({visible:false})}
+                                                onCancel={()=>this.setState({visible:false})}
+                                                >
+                                                <Row type="flex" justify="center">
+                                                    <MyForm
+                                                        type="ADD" 
+                                                        layout="horizontal" 
+                                                        listField={listFieldAddOrgan}
+                                                        onSubmit={this.handleAddOrgan}
+                                                        listButton={listButtonOrgan}
+                                                    />
+                                                </Row>
+                                            </Modal>
                                         </div>
                                         ):
                                         (
@@ -326,7 +416,7 @@ class Users extends Component {
                                    } 
                                 </div>
                                 <div className="button-right" >
-                                    <Button style={{float:'right'}} onClick={logout}>Đăng xuất</Button>
+                                    <Button style={{float:'right'}} onClick={()=>handleLogout(username)}>Đăng xuất</Button>
                                 </div>
                                 <div className="button-right" >
                                     <Search
@@ -344,12 +434,69 @@ class Users extends Component {
                                 {
                                     (organSelected!==null)?
                                     <div style={{width:'100%',margin:'10px',}}>
-                                        <OrganzationManagerUser organ={this.state.organSelected}/>
+                                     {   
+                                    (edit)?(
+                                        <Row type="flex" justify="center">
+                                            <MyForm
+                                                type="EDIT" 
+                                                layout="vertical" 
+                                                listField={listField}
+                                                onSubmit={this.handleSubmit}
+                                                listButton={listButton}
+                                            />
+                                        </Row>
+                                    ):(
+                                        <div> 
+                                            <Row type="flex" justify="center">
+                                                <Col span={6}>Organzation name: </Col>
+                                                <Col span={6}>{organSelected.nameOrganization}</Col>
+                                            </Row>
+                                            <Row type="flex" justify="center">
+                                                <Col span={6}>Display database name: </Col>
+                                                <Col span={6}>{organSelected.displayNameDb}</Col>
+                                            </Row>
+                                            <div style={{textAlign:'center'}}>
+                                                <Button onClick={()=>this.setState({edit:!this.state.edit})} type="primary" >
+                                                    <Icon type="edit" theme="outlined" /> Edit
+                                                </Button>{'  '}
+                                                <Button onClick={()=>this.onDelete(organSelected.idOrganization)} type="primary" >
+                                                    <Icon type="delete" theme="outlined" /> Delete
+                                                </Button>{'  '}
+                                                <Button onClick={()=>{
+                                                        this.setState({show:!this.state.show});
+                                                    }} type="primary" >
+                                                    <Icon type="setting" theme="outlined" /> Settings
+                                                </Button>
+                                            </div>
+                                            {
+                                                (show)?
+                                                    <div>
+                                                        <Tabs
+                                                            defaultActiveKey="1"
+                                                            tabPosition='left'
+                                                            // style={{ height: 220 }}
+                                                            >
+                                                            <TabPane tab={<span><Icon type="users" />User</span>} key="1">
+                                                                {/* <Users listUser={users}/> */}
+                                                            </TabPane>
+                                                            <TabPane tab={<span><Icon type="users" />Group</span>} key="2">
+                                                                {/* <Group listGroup={group}/> */}
+                                                            </TabPane>
+                                                            <TabPane tab={<span><Icon type="users" />Services</span>} key="3">
+                                                                {/* <Services organID={organ.organID}/> */}
+                                                            </TabPane>
+                                                            <TabPane tab={<span><Icon type="users" />Demo</span>} key="4">
+                                                                I am updating...
+                                                            </TabPane>
+                                                        </Tabs>
+                                                    </div>
+                                                    :<div></div>
+                                            }
+                                        </div>
+                                    )
+                                }
                                     </div>
-                                    :
-                                    <div>
-
-                                    </div>
+                                    : <div> </div>
                                 }
                             </Row>
                         </div>
@@ -365,7 +512,7 @@ class Users extends Component {
                 }}>Tải lại</Button>
         </div>);
     }
-
+ 
 }
 const mapStateToProps = state => {
     return {
@@ -373,32 +520,38 @@ const mapStateToProps = state => {
         isFetchingCategory:state.isFetchingCategory,
         scopeOfUser : state.scopeOfUser,
         organs: state.organs,
+        account:state.account,
+        router:state.router,
     }
 }
 
 const mapDispatchToProps = (dispatch, props) => {
     return {
-        fetchAllCategory: (pageSize,pageIndex,StringFilter) => {
-            dispatch(actFetchCategoryRequest(pageSize,pageIndex,StringFilter));
+        searchOrgan: (pageSize,pageNow,keywork,accesstoken) => {
+            dispatch(searchOrganRequest(pageSize,pageNow,keywork,accesstoken))
         },
-        searchCategory: (pageSize,pageNow,keywork) => {
-            dispatch(searchCategoryRequest(pageSize,pageNow,keywork))
+        deleteOrgan: (id,pageSize,pageIndex,iSearch,accesstoken) => {
+            dispatch(actDeleteOrganRequest(id,pageSize,pageIndex,iSearch,accesstoken))
         },
-        onDeleteCategory: (id,pageSize,pageIndex,StringFilter) => {
-            dispatch(actDeleteCategoryRequest(id,pageSize,pageIndex,StringFilter));
-        },
+
         setScopeOfUser: (scope) => {
             dispatch(setScopeAccess(scope));
         },
-        fetchingAllOrgan:()=>{
-            dispatch(actFetchingAllOrgan());
+        fetchingAllOrgan:(pageSize,pageIndex,StringFilter)=>{
+            dispatch(actFetchOrganRequest(pageSize,pageIndex,StringFilter));
         },
         filterOrgan: (organ) => {
             dispatch(actFilterUserWithOrgan(organ));
         },
         filterGroup:(organ)=>{
             dispatch(actFilterGroupWithOrgan(organ));
-        }
+        },
+        updateOrgan: (idOrganzination,Organ,pageIndex,pageSize,StringFilter,accesstoken) => {
+            dispatch(actUpdateOrganRequest(idOrganzination,Organ,pageIndex,pageSize,StringFilter,accesstoken));
+        },
+        createNewOrgan: (organ,pageIndex,pageSize,StringFilter,accesstoken) => {
+            dispatch(actAddOrganRequest(organ,pageIndex,pageSize,StringFilter,accesstoken));
+        },
 
     }
 }

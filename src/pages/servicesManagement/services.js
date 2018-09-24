@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import 'react-table/react-table.css';
 import swal from 'sweetalert';
 import {actFetchCategoryRequest, actDeleteCategoryRequest, searchCategoryRequest} from 'redux/categoryManagement/actions/index';
-
+import {actGetAllServiceByOrganId} from 'redux/service/actions/index';
 import {login,logout} from 'utils/securityAPI/apiCaller';
 import {ACCESS_TOKEN} from 'settings/sessionStorage';
 import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
@@ -80,6 +80,7 @@ class Users extends Component {
 
     
     componentWillMount(){
+        this.props.getAllServiceByOrganID(this.props.organID);
         var {pageSize,pageIndex,iSearch} = this.state;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var obj = JSON.parse(ss);
@@ -190,7 +191,7 @@ class Users extends Component {
     } 
     
     render() {
-        var { isFetchingCategory,categorys,scopeOfUser ,listService} = this.props;
+        var { isFetchingCategory,categorys,scopeOfUser ,service} = this.props;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
         var isDisabled = (scopeOfUser.includes("CATE.WRITE"))?false:true;
         var objSetting={
@@ -314,7 +315,7 @@ class Users extends Component {
                             </div>
                             <br/> <br/>  <br/>
                            <div style={{width:'100%',marginTop:'30px',}}>
-                                <MyTable styleTable="TABLE_ANTD" data={listService} col={myCol} ObjSetting={objSetting}/>
+                                <MyTable styleTable="TABLE_ANTD" data={service} col={myCol} ObjSetting={objSetting}/>
                            </div>
                         </div>
                     </div>
@@ -336,6 +337,7 @@ const mapStateToProps = state => {
         categorys: state.categorys_index,
         isFetchingCategory:state.isFetchingCategory,
         scopeOfUser : state.scopeOfUser,
+        service: state.service,
     }
 }
 
@@ -353,7 +355,9 @@ const mapDispatchToProps = (dispatch, props) => {
         setScopeOfUser: (scope) => {
             dispatch(setScopeAccess(scope));
         },
-
+        getAllServiceByOrganID:(organID)=>{
+            dispatch(actGetAllServiceByOrganId(organID));
+        }
     }
 }
 

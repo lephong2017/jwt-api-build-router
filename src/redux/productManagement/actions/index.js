@@ -65,7 +65,6 @@ export const searchProductRequest = (pageSize,pageNow,keywork) => {
     var total =0;
     callApis(`/Product/CountProductFilter/${keywork}/true`, 'GET', null).then(res => {
         total = res.data;
-        // console.log(total+" ok my god");
     });
     return (dispatch) => {
         dispatch(actFetching(true));

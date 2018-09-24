@@ -1,4 +1,4 @@
-import * as Types from 'redux/group/constants/ActionType';
+import * as Types from '../constants/ActionType';
 import {service} from 'example-data/services';
 var userData = [];
 var arr =[]
@@ -59,6 +59,8 @@ const users = (state = userData, action) => {
             return [...state];
         case Types.DELETE_SERVICE:
             return [...arr];
+        case Types.LIST_SERVICES_BY_ORGANID:
+            return service.filter((sv=>sv.organID==="1"));
         default: return [...state];
         }
     };

@@ -1,5 +1,4 @@
 import * as Types from 'redux/users/constants/ActionType';
-import {organ} from 'example-data/organ';
 import {user} from 'example-data/user';
 var userData = [];
 var arr =[]

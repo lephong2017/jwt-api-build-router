@@ -13,17 +13,23 @@ import totalData from './productManagement/reducers/TotalData';
 import isFetching from './productManagement/reducers/isFetching';
 
 import users from './users/reducers/users';
+import account from './users/reducers/account';
+import accesstoken from './users/reducers/accesstoken';
 
 import organs from './organ/reducers/organ';
  
 import group from './group/reducers/group';
 
+import service from './service/reducers/service';
+
 const appReducers = combineReducers({
     categorys_index,isFetchingCategory,itemCateEditing,scopeOfUser,
     products,itemEditing,categorys,saveCateCode,totalData,isFetching,
-    users,
+    users,account,accesstoken,
     organs,
     group,
+    service,
+
 });
 
 export default appReducers;
