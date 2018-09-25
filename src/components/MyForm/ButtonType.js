@@ -12,7 +12,7 @@ export const ButtonTypeSubmit =(val) =>{
                 overlayClassName={overlayClassNameTooltip}
             >
                 <Button htmlType="submit" type={val.typeButon} size={val.size} loading={val.loading} >
-                    <Icon type={val.icon} theme="outlined" /> Submit
+                    <Icon type={val.icon} theme="outlined" /> {val.title}
                 </Button>
             </Tooltip>
 }

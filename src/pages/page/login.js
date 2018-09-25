@@ -4,6 +4,7 @@ import MyForm from 'components/MyForm/MyForm';
 import { connect } from 'react-redux';
 import { withRouter,Redirect} from 'react-router-dom';
 import {handleLogin} from 'redux/users/actions/user';
+import { ACCESS_TOKEN } from 'settings/sessionStorage';
 
 const listField=[
     {
@@ -101,10 +102,11 @@ class Login extends React.Component {
         },
     ]
     
-      var {accesstoken} = this.props;
+      var accesstoken = sessionStorage.getItem(ACCESS_TOKEN);
       if(accesstoken!==null && accesstoken!==null){
-        return <Redirect to={'/home'} />
+        return <Redirect to={'/organ-manager'} />
       }
+
     return (<Row type="flex" justify="center">
         <MyForm
             type="ADD" 

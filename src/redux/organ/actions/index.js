@@ -25,7 +25,6 @@ export const actAddOrgan = (organ) => {
 }
 export const actFetchOrganRequest = (pageSize,pageIndex,StringFilter,accesstoken) => {
     var total =0;
-    console.log("ok");
     callApis(`Organ/CountOrgan/${StringFilter}/false`, 'GET', null,accesstoken).then(res => {
         total = res.data;
     });

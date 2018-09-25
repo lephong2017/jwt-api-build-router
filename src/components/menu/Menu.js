@@ -4,7 +4,12 @@ import { createBrowserHistory } from "history";
 const history = createBrowserHistory();
 const menus = [
     {
-        name : 'Management Organzation',
+        name : 'Service management',
+        to : '/service',
+        exact : true
+    },
+    {
+        name : 'Organzation Management',
         to : '/organ-manager',
         exact : true
     },

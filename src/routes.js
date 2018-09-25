@@ -8,6 +8,7 @@ import OrganManagement from 'pages/organManagement/index';
 import MyForm from 'components/MyForm/demo';
 import Login from 'pages/page/login';
 import Register from 'pages/page/register';
+import Service from 'pages/servicesManagement/services';
 // import AppSecurity from 'containers/App';
 
 export const adminRoutes = [
@@ -21,51 +22,17 @@ export const adminRoutes = [
         exact: true,
         main: () => <Register />
     },
-    
-    {
-        path: '/my-form',
-        exact: true,
-        main: () => <MyForm />
-    },
-    {
-        path: '/cate-list',
-        exact: false,
-        main: () => <CateListPage />
-    },
-    {
-        path: '/cate/add',
-        exact: false, 
-        main: ({ location, history }) => <CateActionPage location={location} history={history} />
-    },
-    {
-        path: '/security-api',
-        exact: false,
-        main: () => <AppSecurity/>
-    },
-    {
-        path: '/cate/:id/:pagination/edit',
-        exact: false,
-        main: ({ match, history }) => <CateActionPage match={match} history={history} />
-    },
-    {
-        path: '/product-list',
-        exact: false,
-        main: () => <ProductListPage />
-    },
-    {
-        path: '/product/add',
-        exact: false, 
-        main: ({ location, history }) => <ProductActionPage location={location} history={history} />
-    },
-    {
-        path: '/product/:id/:pagination/edit',
-        exact: false,
-        main: ({ match, history }) => <ProductActionPage match={match} history={history} />
-    },
+
     {
         path: '/organ-manager',
         exact: false,
-        main: ({ match, history }) => <OrganManagement match={match} history={history} />
+        main: () => <OrganManagement />
     },
+    {
+        path: '/service',
+        exact: false,
+        main: () => <Service />
+    },
+    
 ];
 

@@ -1,24 +1,22 @@
 import React, { Component } from 'react';
-import { withRouter} from 'react-router-dom';
+import { withRouter,Link} from 'react-router-dom';
 import { connect } from 'react-redux';
 import 'react-table/react-table.css';
 import swal from 'sweetalert';
-import {actFetchCategoryRequest, actDeleteCategoryRequest, searchCategoryRequest} from 'redux/categoryManagement/actions/index';
-import {actGetAllServiceByOrganId} from 'redux/service/actions/index';
-import {login,logout} from 'utils/securityAPI/apiCaller';
+import {actGetAllServiceByOrganId,actFindService,
+    actGetAllService,actDeleteServiceByOrganIDRequest, 
+    actDeleteServiceRequest, searchServiceRequest,
+    actUpdateServiceRequest, actAddServiceRequest} from 'redux/service/actions/index';
 import {ACCESS_TOKEN} from 'settings/sessionStorage';
-import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 
 import MyTable from 'components/table/MyTable';
 import {updateIndex} from 'settings/settings_key_antd';
 import ButtonAntd from 'components/button/ButtonAntd';
-import { Input,Icon,Button } from 'antd';
+import { Input,Icon,Button,Modal,Row } from 'antd';
  
 import {actAddUsersRequest} from 'redux/users/actions/index';
-import {Register} from './action/add';
-import {RegisterEdit} from './action/edit';
 import {showNotification} from 'components/notification/Notification';
-import SetRole from './action/role';
+import MyForm from 'components/MyForm/MyForm';
 const Search = Input.Search;
 
 class Users extends Component {  
@@ -32,71 +30,74 @@ class Users extends Component {
             listPageVisitFilter:[1],
             visible: false,
             visibleEdit: false,
+            btnLoadding:false,
         };
     }
     
     showModal = () =>   this.setState({ visible: true }); 
-    showModalEdit = () =>  this.setState({ visibleEdit: true }); 
-    handleCancel = () =>  this.setState({ visible: false }); 
-    saveFormRef = (formRef) =>  this.formRef = formRef; 
-    saveFormRefEdit = (formRef) =>  this.formRef = formRef; 
+    showModalEdit = (text) =>  {
+        console.log(text);
+        this.setState({ visibleEdit: true }); 
+        var accesstoken = sessionStorage.getItem(ACCESS_TOKEN);
+        this.props.findEdit(text,accesstoken);
+    } 
 
-    handleCreate = () => {
-        showNotification("THêm rồi","Đợi xíu đi nhen","topRight","success");
-        const form = this.formRef.props.form;
-        let user = {}
-        form.validateFields((err, values) => {
-            if (err) {
-                return;
+    handleAddSubmit = (e,props) => {
+        e.preventDefault();
+        this.setState({btnLoadding:true});
+        const {pageIndex,pageSize,iSearch} = this.state;
+        var accesstoken = sessionStorage.getItem(ACCESS_TOKEN);
+        this.setState({listPageVisit:[1]});
+        props.form.validateFields((err, val) => {
+            if (!err) { 
+                console.log('Received values of form: ', val);
+                this.props.onAddService(val,pageIndex,pageSize,iSearch,accesstoken);
+                this.setState({btnLoadding:false,visible:false});
+                showNotification("Add rồi bạn nhé","Đợi xíu đi, mình cập nhật UI cho","topRight","success");
+            }else{
+                this.setState({btnLoadding:false});
             }
-            user=values;
-            console.log('Received values of form: ', values);
-            form.resetFields();
-            this.setState({ visible: false });
-            showNotification("Success","Đã gọi API rồi, yên tâm đi, đợi xí!!!","topRight","success");
-            actAddUsersRequest(user);
         });
         
     }
-    handleCancelEdit = () =>   this.setState({ visibleEdit: false });  
-
-    handleEdit = () => {
-        showNotification("Edit rồi","Đợi xíu đi","topRight","success");
-        const form = this.formRef.props.form;
-        let user = {}
-        form.validateFields((err, values) => {
-            if (err) {
-                return;
-            }
-            user=values;
-            console.log('Received values of form: ', values);
-            form.resetFields();
-            this.setState({ visible: false });
-            showNotification("Success","Đã gọi API rồi, yên tâm đi, đợi xí!!!","topRight","success");
-            actAddUsersRequest(user);
-        });
-        
-    }
-
-    
-    componentWillMount(){
-        this.props.getAllServiceByOrganID(this.props.organID);
-        var {pageSize,pageIndex,iSearch} = this.state;
-        var ss =sessionStorage.getItem(ACCESS_TOKEN);
-        var obj = JSON.parse(ss);
-        if(ss!==null){
-            this.props.fetchAllCategory(pageSize,pageIndex,iSearch);
-            this.props.setScopeOfUser(obj.profile['name']);
+    handleEditService = (e,props) => {
+         e.preventDefault();
+        this.setState({btnLoadding:true});
+        const {pageIndex,pageSize,iSearch,organSelected} = this.state;
+        var accesstoken = sessionStorage.getItem(ACCESS_TOKEN);
+        this.setState({listPageVisit:[1]});
+        props.form.validateFields((err, val) => {
+            if (!err) { 
+            console.log('Received values of form: ', val);
+            var {organ,itemEditingService} = this.props;
+            console.log(itemEditingService);
+            (organ!==undefined)?
+            this.props.onUpdateService(organ.idOrganization,val,pageIndex,pageSize,iSearch,accesstoken):
+            this.props.onUpdateService(itemEditingService.idservice,val,pageIndex,pageSize,iSearch,accesstoken);
+            this.setState({btnLoadding:false,visibleEdit:false});
+            showNotification("Edit thành công","Bạn vui lòng đợi một tý, mình cập nhật lại DB đã","topRight","success");
+          
         }
+        });
+        
+    }
+    componentWillMount(){
+        var {pageSize,pageIndex,iSearch} = this.state;
+        var {organ } = this.props;
+        var accesstoken =sessionStorage.getItem(ACCESS_TOKEN);
+        (organ===undefined)?
+        this.props.fetchAllService(pageSize,pageIndex,iSearch,accesstoken):
+        this.props.getAllServiceByOrganID(organ.idOrganization,pageSize,pageIndex,accesstoken);
     }
     onChange=e =>{
+        var accesstoken = sessionStorage.getItem(ACCESS_TOKEN);
         var val =e.target.value;
         if(val.trim()===''){
             this.setState({iSearch:"ALL"});
-            this.props.fetchAllCategory(this.state.pageSize,this.state.pageIndex,"ALL");
+            this.props.fetchAllService(this.state.pageSize,this.state.pageIndex,"ALL",accesstoken);
         }else{
             this.setState({iSearch:e.target.value},function(){
-             this.props.searchCategory(this.state.pageSize,this.state.pageIndex,this.state.iSearch);
+             this.props.searchService(this.state.pageSize,this.state.pageIndex,this.state.iSearch,accesstoken);
             });
         }
         this.setState({
@@ -112,14 +113,14 @@ class Users extends Component {
         word=e;
         if(word!==''){
             if(word==='ALL'){
-                this.props.fetchAllCategory(this.state.pageSize,this.state.pageIndex,"ALL");
+                this.props.fetchAllService(this.state.pageSize,this.state.pageIndex,"ALL");
             }else{
                 console.log(word+" is word search, pageSize: "+this.state.pageSize+" pageInd: "+this.state.pageIndex);
-                this.props.searchCategory(this.state.pageSize,this.state.pageIndex,word);
+                this.props.searchService(this.state.pageSize,this.state.pageIndex,word);
             }
         }else{
             // console.log("Lỗi này hơi bị ghê!!!");
-            this.props.fetchAllCategory(this.state.pageSize,this.state.pageIndex,"ALL");
+            this.props.fetchAllService(this.state.pageSize,this.state.pageIndex,"ALL");
         }
         this.setState({
             listPageVisit:[],
@@ -128,8 +129,7 @@ class Users extends Component {
        
     }
     onDelete = (id) => { 
-        // console.log(id);
-        var {onDeleteCategory} = this.props;
+        var {onDeleteService,onDeleteServiceByOrganID,organ} = this.props;
         swal({
             title: "Are you sure?",
             text: "Once deleted, you will not be able to recover this imaginary file!",
@@ -139,7 +139,10 @@ class Users extends Component {
         })
         .then((willDelete) => {
             if (willDelete) {
-                onDeleteCategory(id,this.state.pageSize,this.state.pageIndex,this.state.iSearch);
+                var accesstoken = sessionStorage.getItem(ACCESS_TOKEN);
+                (organ!==undefined)?
+                onDeleteServiceByOrganID(id,organ.idOrganization,this.state.pageSize,this.state.pageIndex,this.state.iSearch,accesstoken):
+                onDeleteService(id,this.state.pageSize,this.state.pageIndex,this.state.iSearch,accesstoken);
                 swal("Poof! Your imaginary file has been deleted!", {
                     icon: "success",
                 });
@@ -149,7 +152,7 @@ class Users extends Component {
         });
     }
     onPageChange=(pageInd)=>{
-        var { fetchAllCategory,searchCategory } = this.props;
+        var { fetchAllService,searchService } = this.props;
         var stringFilter = this.state.iSearch;
         if(stringFilter===''||stringFilter==="ALL"){
             var pageVisit = this.state.listPageVisit;
@@ -163,7 +166,7 @@ class Users extends Component {
                 if(isPageVisit===false){
                     pageVisit.push(pageInd);
                     this.setState({listPageVisit:pageVisit, });
-                    fetchAllCategory(
+                    fetchAllService(
                         this.state.pageSize,
                         this.state.pageIndex,
                         "ALL"
@@ -179,7 +182,7 @@ class Users extends Component {
                     if(isPageVisit===false){
                         pageVisit.push(pageInd);
                         this.setState({listPageVisitFilter:pageVisit, });
-                        searchCategory(
+                        searchService(
                             this.state.pageSize,
                             this.state.pageIndex,
                             stringFilter
@@ -191,11 +194,11 @@ class Users extends Component {
     } 
     
     render() {
-        var { isFetchingCategory,categorys,scopeOfUser ,service} = this.props;
+        var { isFetchingService, myCol,service,itemEditingService} = this.props;
         var ss =sessionStorage.getItem(ACCESS_TOKEN);
-        var isDisabled = (scopeOfUser.includes("CATE.WRITE"))?false:true;
+        var isDisabled = false;
         var objSetting={
-            loadding:{isFetchingCategory},
+            loadding:{isFetchingService},
             defaultFilterMethod:this.defaultFilterMethod,
             defaultPageSize:5,
             onPageChange:this.onPageChange,
@@ -205,53 +208,34 @@ class Users extends Component {
             pageSize:this.state.pageSize,
             getObject:()=>{console.log("")}
         }
-        var myCol=[
+        var showColService=[
             {
-                title: "ID",
-                dataIndex: "id",
-                key:`id${updateIndex()}`,
+                title: "idservice",
+                dataIndex: "idservice",
+                key:`idservice${updateIndex()}`,
             },
             {
-                title: "Name",
-                dataIndex: "name",
-                key:`name${updateIndex()}`,
-            },
-            {
-                title: "Description",
-                dataIndex: "description",
-                key:`description${updateIndex()}`,
-            },
-            {
-                title: "Max",
-                dataIndex: "max",
-                key:`max${updateIndex()}`,
-            },
-            {
-                title: "Avalible",
-                dataIndex: "avaliable",
-                key:`avaliable${updateIndex()}`,
-            },
-            {
-                title: "Used",
-                dataIndex: "used",
-                key:`used${updateIndex()}`,
+                title: "Service Name ",
+                dataIndex: "serviceName",
+                key:`serviceName${updateIndex()}`,
             },
             {
                 title: "Edit", 
-                key:`edit${updateIndex()}`,
-                dataIndex:"id",
+                key:`Service_idedit${updateIndex()}`,
+                dataIndex:"idservice",
                 render:(text)  => {
-                    return (
+                    
+                    return ( 
                         <div className="button-table"> 
-                                <Button disabled={isDisabled} onClick={this.showModalEdit} type="primary" shape="circle" icon="edit" />
+                            <Button disabled={isDisabled} onClick={()=>{this.showModalEdit(text);}} type="primary" shape="circle" icon="edit" />
                         </div>
                         )
                 }
             },
             {   
                 title: "Delete",
-                key:`id${updateIndex()}`,
-                dataIndex:"id",
+                key:`Service_id_del${updateIndex()}`,
+                dataIndex:"idservice",
                 render: (text) => {
                     return (
                         <div  className="button-table"> 
@@ -263,20 +247,121 @@ class Users extends Component {
                         </div>
                         )
                 } 
-            }];
-       return (ss===null) ?
-            (<div>
+            }]
+        var showCol=(myCol!==undefined)?myCol:showColService;
+        var listFieldEdit=[
+            {
+                id:"serviceName",
+                label:"Service name:",
+                description:"Tên service bạn hỗ trợ!",
+                icon:"user",
+                placeholder:"Enter your service name...",
+                required:true,
+                message:'Vui lòng nhập service name',
+                defaultValue:(itemEditingService!==null)?itemEditingService.serviceName:"",
+                event:{
+                    onClick:()=>console.log("event onClick "), 
+                    onChange:()=>console.log("event onChange "),
+                },
+                fieldType:{
+                    type:"INPUT_TEXT",
+                }
+            },
+            
+          ];
+        var listButtonEdit=[
+            {
+                name:"Edit",
+                title:"Edit",
+                description:"Edit data from your form",
+                loading:this.state.btnLoadding,
+                events:{
+                    onSubmit: ()=>console.log("submit form edit"),
+                },
+                styles:{
+                    color:'cyan',
+                    margin:'5px'
+                },
+                type:"SUBMIT",
+                icon:"save",
+                typeButon:"primary"
+            },
+            {
+                name:"Back",
+                title:"Back",
+                description:"Back",
+                link:this.props.router.location.pathname,
+                onClick:()=>console.log("back"),
+                events:()=>console.log("event form"),
+                styles:{
+                    color:'red',
+                    margin:'5px'
+                },
+                type:"BACK",
+                icon:"rollback",
+                typeButon:"primary"
+            },
+        ]
+        var listButtonAdd=[
+            {
+                name:"Edit",
+                title:"Add",
+                description:"Add data from your form",
+                loading:this.state.btnLoadding,
+                events:{
+                    onSubmit: ()=>console.log("submit form Add"),
+                },
+                styles:{
+                    color:'cyan',
+                    margin:'5px'
+                },
+                type:"SUBMIT",
+                icon:"add",
+                typeButon:"primary"
+            },
+            {
+                name:"Back",
+                title:"Back",
+                description:"Back",
+                link:this.props.router.location.pathname,
+                onClick:()=>console.log("back"),
+                events:()=>console.log("event form"),
+                styles:{
+                    color:'red',
+                    margin:'5px'
+                },
+                type:"BACK",
+                icon:"rollback",
+                typeButon:"primary"
+            },
+        ]
+        
+        return (ss===null) ?
+        (<div>
                <h1 style={{color:'red'}}>Để xem chức năng này bạn cần phải đăng nhập trước!!!</h1>
-                <Button bsStyle="success" onClick={login}>Đăng nhập</Button>
+               <Link to={'/login'}>
+                    <Button bsStyle="success">Đăng nhập</Button>
+               </Link>
            </div>)
-        :(!categorys.includes(undefined))?
+        :(!service.includes(undefined))?
          (<div className="container-content">
-          <RegisterEdit
-                wrappedComponentRef={this.saveFormRefEdit}
-                visible={this.state.visibleEdit}
-                onCancel={this.handleCancelEdit}
-                onCreate={this.handleEdit}
-            />
+                <Modal
+                    visible={this.state.visibleEdit}
+                    title="Create a new service"
+                    okText="Create"
+                    onOk={()=>this.setState({visibleEdit:false})}
+                    onCancel={()=>this.setState({visibleEdit:false})}
+                    >
+                    <Row type="flex" justify="center">
+                        <MyForm
+                            type="EDIT" 
+                            layout="horizontal" 
+                            listField={listFieldEdit}
+                            onSubmit={this.handleEditService}
+                            listButton={listButtonEdit}
+                        />
+                    </Row>
+                </Modal>
                 <div className="row">
                     <div className="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                         <div className="container-table">
@@ -285,15 +370,27 @@ class Users extends Component {
                                    {
                                       (!isDisabled) ?
                                         (<div>
-                                            <Button type="primary" onClick={this.showModal}>
-                                                <Icon type="user-add" theme="outlined" />Add Services 
+                                           <Button type="primary" onClick={this.showModal}>
+                                                <Icon type="user-add" theme="outlined" />Add Service 
                                             </Button>
-                                            <Register
-                                              wrappedComponentRef={this.saveFormRef}
-                                              visible={this.state.visible}
-                                              onCancel={this.handleCancel}
-                                              onCreate={this.handleCreate}
-                                            />
+                                            <Modal
+                                                visible={this.state.visible}
+                                                title="Create a new service"
+                                                okText="Create"
+                                                onOk={()=>this.setState({visible:false})}
+                                                onCancel={()=>this.setState({visible:false})}
+                                                >
+                                                <Row type="flex" justify="center">
+                                                    <MyForm
+                                                        type="EDIT" 
+                                                        layout="horizontal" 
+                                                        listField={listFieldEdit}
+                                                        onSubmit={this.handleAddSubmit}
+                                                        listButton={listButtonAdd}
+                                                    />
+                                                </Row>
+                                            </Modal>
+                                        
                                         </div>
                                         ):
                                         (
@@ -301,9 +398,6 @@ class Users extends Component {
                                             </div>
                                         )
                                    } 
-                                </div>
-                                <div className="button-right" >
-                                    <Button style={{float:'right'}} onClick={logout}>Đăng xuất</Button>
                                 </div>
                                 <div className="button-right" >
                                     <Search
@@ -315,7 +409,7 @@ class Users extends Component {
                             </div>
                             <br/> <br/>  <br/>
                            <div style={{width:'100%',marginTop:'30px',}}>
-                                <MyTable styleTable="TABLE_ANTD" data={service} col={myCol} ObjSetting={objSetting}/>
+                                <MyTable styleTable="TABLE_ANTD" data={service} col={showCol} ObjSetting={objSetting}/>
                            </div>
                         </div>
                     </div>
@@ -333,30 +427,41 @@ class Users extends Component {
 
 }
 const mapStateToProps = state => {
+    console.log(state);
     return {
-        categorys: state.categorys_index,
-        isFetchingCategory:state.isFetchingCategory,
+        isFetchingService:state.isFetchingService,
         scopeOfUser : state.scopeOfUser,
         service: state.service,
+        router: state.router,
+        itemEditingService:state.itemEditingService
     }
 }
 
 const mapDispatchToProps = (dispatch, props) => {
     return {
-        fetchAllCategory: (pageSize,pageIndex,StringFilter) => {
-            dispatch(actFetchCategoryRequest(pageSize,pageIndex,StringFilter));
+        fetchAllService: (pageSize,pageIndex,StringFilter,accesstoken) => {
+            dispatch(actGetAllService(pageSize,pageIndex,StringFilter,accesstoken));
         },
-        searchCategory: (pageSize,pageNow,keywork) => {
-            dispatch(searchCategoryRequest(pageSize,pageNow,keywork))
+        searchService: (pageSize,pageNow,keywork,accesstoken) => {
+            dispatch(searchServiceRequest(pageSize,pageNow,keywork,accesstoken))
         },
-        onDeleteCategory: (id,pageSize,pageIndex,StringFilter) => {
-            dispatch(actDeleteCategoryRequest(id,pageSize,pageIndex,StringFilter));
+        onAddService: (service,pageSize,pageIndex,StringFilter,accesstoken) => {
+            dispatch(actAddServiceRequest(service,pageSize,pageIndex,StringFilter,accesstoken));
         },
-        setScopeOfUser: (scope) => {
-            dispatch(setScopeAccess(scope));
+        onDeleteService: (id,pageSize,pageIndex,StringFilter,accesstoken) => {
+            dispatch(actDeleteServiceRequest(id,pageSize,pageIndex,StringFilter,accesstoken));
         },
-        getAllServiceByOrganID:(organID)=>{
-            dispatch(actGetAllServiceByOrganId(organID));
+        onDeleteServiceByOrganID: (id,organID,pageSize,pageIndex,StringFilter,accesstoken) => {
+            dispatch(actDeleteServiceByOrganIDRequest(id,organID,pageSize,pageIndex,StringFilter,accesstoken));
+        },
+        onUpdateService:(idservice,val,pageIndex,pageSize,iSearch,accesstoken)=>{
+            dispatch(actUpdateServiceRequest(idservice,val,pageIndex,pageSize,iSearch,accesstoken));
+        },
+        getAllServiceByOrganID:(organID,pageSize,pageNow,accesstoken)=>{
+            dispatch(actGetAllServiceByOrganId(organID,pageSize,pageNow,accesstoken));
+        },
+        findEdit:(serviceID,accesstoken)=>{
+            dispatch(actFindService(serviceID,accesstoken));
         }
     }
 }

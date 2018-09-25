@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { withRouter,Link} from 'react-router-dom';
+import { withRouter,Link,Redirect} from 'react-router-dom';
 import { connect } from 'react-redux';
 import 'react-table/react-table.css';
 import swal from 'sweetalert';
@@ -10,14 +10,15 @@ import {setScopeAccess} from 'redux/categoryManagement/actions/cates';
 import MyTable from 'components/table/MyTable';
 import {updateIndex} from 'settings/settings_key_antd';
 import { Input,Icon,Button,Row,Col ,Tabs,Modal } from 'antd';
-
-// import {actAddUsersRequest} from 'redux/users/actions/index';
+import ButtonAntd from 'components/button/ButtonAntd';
 import {showNotification} from 'components/notification/Notification';
 import {actFetchOrganRequest,searchOrganRequest,actAddOrganRequest,actUpdateOrganRequest,actDeleteOrganRequest} from 'redux/organ/actions/index';
 
 import {actFilterGroupWithOrgan} from 'redux/group/actions/index';
+import {actDeleteServiceRequest} from 'redux/service/actions/index';
 import {handleLogout} from 'redux/users/actions/user';
 import MyForm from 'components/MyForm/MyForm';
+import Service from 'pages/servicesManagement/services';
 const Search = Input.Search;   
 const TabPane = Tabs.TabPane;
 const listFieldAddOrgan=[
@@ -69,6 +70,7 @@ class Users extends Component {
             organSelected:null,
             show:false,
             edit:false,
+            btnLoadding:false,
         };
     }
     showModal = () => {
@@ -187,9 +189,9 @@ class Users extends Component {
             }
     } 
     getOrgan=(organ)=>{
-        this.setState({organSelected:organ});
-         this.props.filterOrgan(organ);
-         this.props.filterGroup(organ);
+        this.setState({organSelected:organ,show:false});
+        //  this.props.filterOrgan(organ);
+        //  this.props.filterGroup(organ);
     }
     handleSubmit = (e,props) => {
         showNotification("Edit rồi","Đợi xíu đi","topRight","success");
@@ -301,7 +303,7 @@ class Users extends Component {
                 typeButon:"primary"
             },
         ]
-        const listField=[
+         const listField=[
             {
                 id:"nameOrganization",
                 label:"Organization name:",
@@ -337,7 +339,7 @@ class Users extends Component {
                 }
             },
           ];
-          const listButtonOrgan=[
+         const listButtonOrgan=[
             {
                 name:"Submit",
                 title:"Submit",
@@ -370,7 +372,50 @@ class Users extends Component {
                 typeButon:"primary"
             },
         ]
-         return (username===null) ?
+        
+        const serviceCol=[
+            {
+                title: "Service Name ",
+                dataIndex: "serviceName",
+                key:`serviceName${updateIndex()}`,
+            },
+            {
+                title: "Expire Date",
+                dataIndex: "expireDate",
+                key:`expireDate${updateIndex()}`,
+            },
+            {
+                title: "Max",
+                dataIndex: "lincenseAmount",
+                key:`lincenseAmount${updateIndex()}`,
+            },
+            {
+                title: "Avalible",
+                dataIndex: "license__available",
+                key:`license__available${updateIndex()}`,
+            },
+            {
+                title: "Used",
+                dataIndex: "license__used",
+                key:`license__used${updateIndex()}`,
+            },
+            {   
+                title: "Delete",
+                key:`Service_id_del${updateIndex()}`,
+                dataIndex:"Service_id",
+                render: (text) => {
+                    return (
+                        <div  className="button-table"> 
+                            <ButtonAntd 
+                                isDisabled={isDisabled} 
+                                size="small"  acttype='DELETE' 
+                                onClickComponent={()=>{this.onDeleteService(text);}}
+                                />
+                        </div>
+                        )
+                } 
+            }]
+        return (username===null) ?
             (<div>
                <h1 style={{color:'red'}}>Để xem chức năng này bạn cần phải đăng nhập trước!!!</h1>
                <Link to={"/login"}>
@@ -472,9 +517,8 @@ class Users extends Component {
                                                 (show)?
                                                     <div>
                                                         <Tabs
-                                                            defaultActiveKey="1"
+                                                            defaultActiveKey="3"
                                                             tabPosition='left'
-                                                            // style={{ height: 220 }}
                                                             >
                                                             <TabPane tab={<span><Icon type="users" />User</span>} key="1">
                                                                 {/* <Users listUser={users}/> */}
@@ -483,10 +527,7 @@ class Users extends Component {
                                                                 {/* <Group listGroup={group}/> */}
                                                             </TabPane>
                                                             <TabPane tab={<span><Icon type="users" />Services</span>} key="3">
-                                                                {/* <Services organID={organ.organID}/> */}
-                                                            </TabPane>
-                                                            <TabPane tab={<span><Icon type="users" />Demo</span>} key="4">
-                                                                I am updating...
+                                                                <Service organ={organSelected} myCol={serviceCol}/>
                                                             </TabPane>
                                                         </Tabs>
                                                     </div>
@@ -522,6 +563,7 @@ const mapStateToProps = state => {
         organs: state.organs,
         account:state.account,
         router:state.router,
+        accesstoken:state.accesstoken
     }
 }
 
@@ -551,6 +593,9 @@ const mapDispatchToProps = (dispatch, props) => {
         },
         createNewOrgan: (organ,pageIndex,pageSize,StringFilter,accesstoken) => {
             dispatch(actAddOrganRequest(organ,pageIndex,pageSize,StringFilter,accesstoken));
+        },
+        onDeleteService: (id,pageSize,pageIndex,StringFilter,accesstoken) => {
+            dispatch(actDeleteServiceRequest(id,pageSize,pageIndex,StringFilter,accesstoken));
         },
 
     }

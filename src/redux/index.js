@@ -21,6 +21,7 @@ import organs from './organ/reducers/organ';
 import group from './group/reducers/group';
 
 import service from './service/reducers/service';
+import itemEditingService from './service/reducers/itemEditingService';
 
 const appReducers = combineReducers({
     categorys_index,isFetchingCategory,itemCateEditing,scopeOfUser,
@@ -28,7 +29,7 @@ const appReducers = combineReducers({
     users,account,accesstoken,
     organs,
     group,
-    service,
+    service,itemEditingService
 
 });
 
